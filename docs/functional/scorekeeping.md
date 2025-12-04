@@ -7,7 +7,7 @@ The core feature of the application is a robust scorekeeping interface for Darts
 This scorekeeping interface is the **single source of truth** for all gameplay. It is designed to be "Context Agnostic":
 *   **Guest Mode**: A walk-in player uses it immediately without login.
 *   **Casual Play**: Registered users log in to track stats, but play a friendly match.
-*   **Tournament Mode**: The *exact same interface* is used, but the "Match Settings" are locked/pre-filled by the tournament engine.
+*   **Tournament Mode**: The *exact same in terface* isused, but the "Match Settings" are locked/pre-filled by the tournament engine.
 
 ## Game Modes
 
