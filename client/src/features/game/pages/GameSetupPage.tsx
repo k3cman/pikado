@@ -13,15 +13,19 @@ export default function GameSetupPage() {
         }
     ]
     return (
-        <>
-            <h1>Select game mode</h1>
-            <div className="flex flex-col items-center gap-2">
+        <div className="h-screen flex flex-col items-center justify-center p-4">
+            <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8">
+                Select Game Mode
+            </h1>
+            <div className="flex flex-col items-center gap-4 w-full max-w-xs">
                 {gameModes.map((gameMode) => (
-                    <Button key={gameMode.label}>
-                        <Link to={gameMode.link}>{gameMode.label}</Link>
-                    </Button>
+                    <Link key={gameMode.label} to={gameMode.link} className="w-full">
+                        <Button variant="primary" size="lg" className="w-full">
+                            {gameMode.label}
+                        </Button>
+                    </Link>
                 ))}
             </div>
-        </>
+        </div>
     )
 }
