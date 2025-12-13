@@ -1,31 +1,11 @@
-import { Button } from "@/components/ui/button"
-import { Link } from "react-router"
+import { useParams } from "react-router";
+import { GameForm } from "../components/GameForm";
 
 export default function GameSetupPage() {
-    const gameModes = [
-        {
-            label: '501',
-            link: '/game/play/501'
-        },
-        {
-            label: 'Cricket',
-            link: '/game/play/cricket'
-        }
-    ]
+    const {mode} = useParams<{mode: '501' | 'cricket' | undefined}>();
     return (
         <div className="h-screen flex flex-col items-center justify-center p-4">
-            <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8">
-                Select Game Mode
-            </h1>
-            <div className="flex flex-col items-center gap-4 w-full max-w-xs">
-                {gameModes.map((gameMode) => (
-                    <Link key={gameMode.label} to={gameMode.link} className="w-full">
-                        <Button variant="primary" size="lg" className="w-full">
-                            {gameMode.label}
-                        </Button>
-                    </Link>
-                ))}
-            </div>
+            {mode ? <GameForm mode={mode} /> : <div>Invalid mode</div>}
         </div>
     )
 }

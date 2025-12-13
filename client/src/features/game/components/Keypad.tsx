@@ -27,6 +27,7 @@ export const Keypad: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
 
             {/* 1. Multiplier Row */}
             <div className="grid grid-cols-3 gap-2 mb-2">
+             
                 <button
                     onClick={() => toggleMultiplier(2)}
                     className={`${baseBtn} ${multiplier === 2 ? 'bg-green-500 text-black border-green-700 translate-y-1 border-b-0' : 'bg-gray-800 text-green-500 border-b-4 border-gray-900'}`}
