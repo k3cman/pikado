@@ -5,7 +5,7 @@ interface KeypadProps {
     onUndo: () => void;
 }
 
-export const Keypad: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
+export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
     // Local state for the multiplier (Double/Triple)
     const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
 
