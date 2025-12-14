@@ -44,7 +44,7 @@ const initialState: GameState = {
     bestOfLegs: 3,
     bestOfSets: 3,
     startScore: undefined,
-    inputFormat: undefined,
+    inputFormat: 'score',
     history: [],
     players: dummyPlayers,
     currentPlayerId: '1',

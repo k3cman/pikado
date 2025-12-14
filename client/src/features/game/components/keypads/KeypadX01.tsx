@@ -3,11 +3,14 @@ import React, { useState } from 'react';
 interface KeypadProps {
     onPress: (points: number, multiplier: number) => void;
     onUndo: () => void;
+    inputFormat: 'score' | 'single';
 }
 
-export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
+export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat }) => {
     // Local state for the multiplier (Double/Triple)
     const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
+    const singleKeypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
+    const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6,58, 45, 7, 8, 9, 100, 0];
 
     const handleNumClick = (points: number) => {
         onPress(points, multiplier);
@@ -26,7 +29,7 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
         <div className="flex flex-col h-full bg-black p-2 gap-1 overflow-hidden">
 
             {/* 1. Multiplier Row */}
-            <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+            {inputFormat === 'single' && (<div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
                 <button
                     onClick={() => toggleMultiplier(2)}
                     className={`${baseBtn} ${multiplier === 2 ? 'bg-green-500 text-black border-green-700 translate-y-1 border-b-0' : 'bg-gray-800 text-green-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
@@ -45,11 +48,19 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
                 >
                     UNDO
                 </button>
-            </div>
+            </div>)}
 
             {/* 2. Number Grid (1-20) */}
             <div className="flex-1 min-h-0 grid grid-cols-5 gap-1">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map((num) => (
+                {inputFormat === 'single' ? singleKeypad.map((num) => (
+                    <button
+                        key={num}
+                        onClick={() => handleNumClick(num)}
+                        className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                    >
+                        {num}
+                    </button>
+                )) : scoreKeypad.map((num) => (
                     <button
                         key={num}
                         onClick={() => handleNumClick(num)}
