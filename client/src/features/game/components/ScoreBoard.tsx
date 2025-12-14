@@ -3,7 +3,7 @@ import { useAppSelector } from '../../../app/hooks';
 
 export const ScoreBoard: React.FC = () => {
     // READ from Redux
-    const { players, currentPlayerId, dartsThrownInTurn } = useAppSelector((state) => state.game);
+    const { players, currentPlayerId } = useAppSelector((state) => state.game);
 
     return (
         <div className="w-full grid grid-cols-2 gap-4 p-4 bg-gray-900 text-white shadow-lg">
@@ -30,8 +30,8 @@ export const ScoreBoard: React.FC = () => {
                             {player.score}
                         </div>
 
-                        {/* Turn Indicators (The 3 dots) */}
-                        <div className="flex gap-3 mt-4 h-4">
+                        
+                        {/* <div className="flex gap-3 mt-4 h-4">
                             {isCurrent && [1, 2, 3].map((dartNum) => (
                                 <div
                                     key={dartNum}
@@ -41,7 +41,7 @@ export const ScoreBoard: React.FC = () => {
                   `}
                                 />
                             ))}
-                        </div>
+                        </div> */}
                     </div>
                 );
             })}

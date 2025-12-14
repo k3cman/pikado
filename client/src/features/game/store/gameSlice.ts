@@ -16,13 +16,28 @@ export interface GameState {
     bestOfSets: number;
     startScore: '301' | '501' | '701' | undefined;
     inputFormat: 'score' | 'single' | undefined;
-    // players: Player[];
-    // currentPlayerId: string;
+    players: Player[];
+    currentPlayerId: string;
     // dartsThrownInTurn: number; // 0, 1, 2, or 3
     // winnerId: string | null;
     history: any[]; // For Undo (simplified for now)
 
 }
+
+const dummyPlayers: Player[] = [
+    {
+        id: '1',
+        name: 'Player 1',
+        score: 501,
+        scoreAtStartOfTurn: 501,
+    },
+    {
+        id: '2',
+        name: 'Player 2',
+        score: 501,
+        scoreAtStartOfTurn: 501,
+    },
+];
 
 const initialState: GameState = {
     mode: '501',
@@ -31,6 +46,8 @@ const initialState: GameState = {
     startScore: undefined,
     inputFormat: undefined,
     history: [],
+    players: dummyPlayers,
+    currentPlayerId: '1',
 };
 
 // --- Helper: Switch Turn ---

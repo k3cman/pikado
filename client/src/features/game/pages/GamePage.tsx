@@ -1,6 +1,6 @@
 import { useAppSelector } from '../../../app/hooks';
-import { KeypadCricket } from '../components/keypads/KeypadCricket';
-import { KeypadX01 } from '../components/keypads/KeypadX01';
+import { createKeypad } from '../components/keypads/KeypadFactory';
+import { ScoreBoard } from '../components/ScoreBoard';
 import { selectGameConfig } from '../store/gameSlice';
 
 
@@ -62,15 +62,14 @@ export default function GamePage() {
     // 2. MAIN GAME UI
     return (
         <div className="flex flex-col h-screen bg-black overflow-hidden">
-            <KeypadCricket />
-            {/* Top: Score Area (Flex grow to take available space) */}
-            <div className="flex-grow flex items-center justify-center overflow-y-auto p-2">
-                {/* <ScoreBoard /> */}
+            {/* Top: Score Area (Fixed ~200px) */}
+            <div className="h-[200px] min-h-[200px] flex-shrink-0 overflow-hidden">
+                <ScoreBoard />
             </div>
 
-            {/* Bottom: Controls (Fixed at bottom) */}
-            <div className="w-full max-w-lg mx-auto bg-gray-900 border-t border-gray-800">
-                {/* <Keypad onPress={handleShot} onUndo={handleUndo} /> */}
+            {/* Bottom: Keypad (Fills remaining space) */}
+            <div className="flex-1 min-h-0 overflow-hidden w-full">
+                {createKeypad(config.mode)}
             </div>
         </div>
     );
