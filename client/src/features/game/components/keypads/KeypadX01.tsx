@@ -2,19 +2,18 @@ import React, { useState } from 'react';
 import { Keypad } from './Keypad';
 
 interface KeypadProps {
-    onPress: (points: number, multiplier: number) => void;
-    onUndo: () => void;
+    onPress: (points: number) => void;
     inputFormat: 'score' | 'single';
 }
 
-export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat }) => {
+export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
     // Local state for the multiplier (Double/Triple)
     const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
     const singleKeypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
     const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6,58, 45, 7, 8, 9, 100];
 
     const handleNumClick = (points: number) => {
-        onPress(points, multiplier);
+        onPress(points * multiplier);
         setMultiplier(1); // Reset to Single after throw
     };
 
@@ -42,7 +41,6 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat 
                     TRIPLE (x3)
                 </button>
                 <button
-                    onClick={onUndo}
                     className={`${baseBtn} bg-red-900/50 text-red-300 border-b-4 border-red-950 text-xs sm:text-sm`}
                 >
                     UNDO

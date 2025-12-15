@@ -90,6 +90,10 @@ export const gameSlice = createSlice({
             state.inputFormat = action.payload.inputFormat;
         },
 
+        throwDart: (state, action: PayloadAction<{points:number}>) => {
+            console.log(action.payload)
+        }
+
         // 2. The Main 501 Logic
         // throwDart: (state, action: PayloadAction<{ points: number; multiplier: number }>) => {
         //     if (state.winnerId) return; // Game over, no more throws
@@ -135,5 +139,5 @@ export const gameSlice = createSlice({
     },
 });
 
-export const { startGame } = gameSlice.actions;
+export const { startGame, throwDart } = gameSlice.actions;
 export default gameSlice.reducer;

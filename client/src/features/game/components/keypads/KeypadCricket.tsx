@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface KeypadProps {
-    onPress?: (points: number, multiplier: number) => void;
+    onPress?: (points: number) => void;
     onUndo?: () => void;
 }
 
@@ -34,14 +34,14 @@ const StatusIndicator: React.FC<{ hits: number }> = ({ hits }) => {
     );
 };
 
-export const KeypadCricket: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
+export const KeypadCricket: React.FC<KeypadProps> = ({ onPress }) => {
     // Styles for the buttons - matching KeypadX01, using min-h-0 for flex scaling
     const baseBtn = "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
     const numBtn = "bg-gray-700 text-white border-b-4 border-gray-900 hover:bg-gray-600";
 
     const handleButtonClick = (points: number, multiplier: number) => {
         if (onPress) {
-            onPress(points, multiplier);
+            onPress(points * multiplier);
         }
     };
 
@@ -132,7 +132,6 @@ export const KeypadCricket: React.FC<KeypadProps> = ({ onPress, onUndo }) => {
                     Ok
                 </button>
                 <button
-                    onClick={onUndo}
                     className={`${baseBtn} flex-1 bg-red-900/50 text-red-300 border-b-4 border-red-950 text-sm sm:text-base`}
                 >
                     Undo
