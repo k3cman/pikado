@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Keypad } from './Keypad';
 
 interface KeypadProps {
     onPress: (points: number, multiplier: number) => void;
@@ -10,7 +11,7 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat 
     // Local state for the multiplier (Double/Triple)
     const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
     const singleKeypad = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20];
-    const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6,58, 45, 7, 8, 9, 100, 0];
+    const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6,58, 45, 7, 8, 9, 100];
 
     const handleNumClick = (points: number) => {
         onPress(points, multiplier);
@@ -23,13 +24,11 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat 
 
     // Styles for the buttons - using min-h-0 for flex scaling
     const baseBtn = "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
-    const numBtn = "bg-gray-700 text-white border-b-4 border-gray-900 hover:bg-gray-600";
 
     return (
-        <div className="flex flex-col h-full bg-black p-2 gap-1 overflow-hidden">
-
-            {/* 1. Multiplier Row */}
-            {inputFormat === 'single' && (<div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+        <Keypad>
+            <Keypad.Section>
+            <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
                 <button
                     onClick={() => toggleMultiplier(2)}
                     className={`${baseBtn} ${multiplier === 2 ? 'bg-green-500 text-black border-green-700 translate-y-1 border-b-0' : 'bg-gray-800 text-green-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
@@ -48,47 +47,80 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, onUndo, inputFormat 
                 >
                     UNDO
                 </button>
-            </div>)}
-
-            {/* 2. Number Grid (1-20) */}
-            <div className="flex-1 min-h-0 grid grid-cols-5 gap-1">
-                {inputFormat === 'single' ? singleKeypad.map((num) => (
-                    <button
-                        key={num}
-                        onClick={() => handleNumClick(num)}
-                        className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
-                    >
-                        {num}
-                    </button>
-                )) : scoreKeypad.map((num) => (
-                    <button
-                        key={num}
-                        onClick={() => handleNumClick(num)}
-                        className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
-                    >
-                        {num}
-                    </button>
-                ))}
             </div>
+            </Keypad.Section>
+            <Keypad.Grid numbers={inputFormat === 'single' ? singleKeypad : scoreKeypad} onNumberPress={handleNumClick} />
+            <Keypad.Section>
+                <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+                    <button onClick={() => handleNumClick(25)} className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-sm sm:text-base`}>BULL</button>
+                    <button onClick={() => handleNumClick(0)} className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}>0</button>
+                   <button onClick={() => {setMultiplier(1); handleNumClick(0);}} className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}>MISS</button>
+                </div>
+            </Keypad.Section>
+        </Keypad>
+        // <div className="flex flex-col h-full bg-black p-2 gap-1 overflow-hidden">
 
-            {/* 3. Bottom Row (Bull & Miss) */}
-            <div className="grid grid-cols-2 gap-1 flex-shrink-0 h-14">
-                <button
-                    onClick={() => handleNumClick(25)}
-                    className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-sm sm:text-base`}
-                >
-                    BULL
-                </button>
-                <button
-                    onClick={() => {
-                        setMultiplier(1);
-                        handleNumClick(0);
-                    }}
-                    className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
-                >
-                    MISS
-                </button>
-            </div>
-        </div>
+        //     {/* 1. Multiplier Row */}
+        //     {inputFormat === 'single' && (<div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+        //         <button
+        //             onClick={() => toggleMultiplier(2)}
+        //             className={`${baseBtn} ${multiplier === 2 ? 'bg-green-500 text-black border-green-700 translate-y-1 border-b-0' : 'bg-gray-800 text-green-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
+        //         >
+        //             DOUBLE (x2)
+        //         </button>
+        //         <button
+        //             onClick={() => toggleMultiplier(3)}
+        //             className={`${baseBtn} ${multiplier === 3 ? 'bg-orange-500 text-black border-orange-700 translate-y-1 border-b-0' : 'bg-gray-800 text-orange-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
+        //         >
+        //             TRIPLE (x3)
+        //         </button>
+        //         <button
+        //             onClick={onUndo}
+        //             className={`${baseBtn} bg-red-900/50 text-red-300 border-b-4 border-red-950 text-xs sm:text-sm`}
+        //         >
+        //             UNDO
+        //         </button>
+        //     </div>)}
+
+        //     {/* 2. Number Grid (1-20) */}
+        //     <div className="flex-1 min-h-0 grid grid-cols-5 gap-1">
+        //         {inputFormat === 'single' ? singleKeypad.map((num) => (
+        //             <button
+        //                 key={num}
+        //                 onClick={() => handleNumClick(num)}
+        //                 className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+        //             >
+        //                 {num}
+        //             </button>
+        //         )) : scoreKeypad.map((num) => (
+        //             <button
+        //                 key={num}
+        //                 onClick={() => handleNumClick(num)}
+        //                 className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+        //             >
+        //                 {num}
+        //             </button>
+        //         ))}
+        //     </div>
+
+        //     {/* 3. Bottom Row (Bull & Miss) */}
+        //     <div className="grid grid-cols-2 gap-1 flex-shrink-0 h-14">
+        //         <button
+        //             onClick={() => handleNumClick(25)}
+        //             className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-sm sm:text-base`}
+        //         >
+        //             BULL
+        //         </button>
+        //         <button
+        //             onClick={() => {
+        //                 setMultiplier(1);
+        //                 handleNumClick(0);
+        //             }}
+        //             className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
+        //         >
+        //             MISS
+        //         </button>
+        //     </div>
+        // </div>
     );
 };
