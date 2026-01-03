@@ -1,4 +1,3 @@
-import type { AppDispatch } from "@/app/store";
 import { GameStrategyCricket } from "./GameStrategyCricket";
 import { GameStrategy501 } from "./GameStrategyX01";
 
@@ -6,7 +5,7 @@ export interface GameStrategy {
     handleThrow: (points: number) => void;
 }
 
-export const createGameStrategy = (mode: '501' | 'cricket', dispatch: AppDispatch) => {
+export const createGameStrategy = (mode: '501' | 'cricket') => {
     switch(mode) {
         case '501':
             return new GameStrategy501(dispatch);
