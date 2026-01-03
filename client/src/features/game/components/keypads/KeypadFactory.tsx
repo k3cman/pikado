@@ -1,9 +1,9 @@
-import type { GameStateZustand } from "../../store/useGameStore";
+import type { GameState } from "../../store/useGameStore";
 import { KeypadCricket } from "./KeypadCricket";
 import { KeypadX01 } from "./KeypadX01";
 
 export const createKeypad = (
-  mode: GameStateZustand["mode"],
+  mode: GameState["mode"],
   inputFormat: "score" | "single",
   onPress: (points: number) => void
 ) => {

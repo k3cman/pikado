@@ -1,7 +1,8 @@
 import { create } from "zustand";
 import { useShallow } from "zustand/shallow";
+import {persist, createJSONStorage} from "zustand/middleware";
 
-export interface PlayerZustand {
+export interface Player {
     id: string;
     name: string;
     score: number;
@@ -9,22 +10,22 @@ export interface PlayerZustand {
     scoreAtStartOfTurn: number;
 }
 
-export interface GameStateZustand {
+export interface GameState {
     mode: '501' | 'cricket';
     bestOfLegs: number;
     bestOfSets: number;
     startScore: '301' | '501' | '701' | undefined;
     inputFormat: 'score' | 'single' | undefined;
-    players: PlayerZustand[];
+    players: Player[];
     currentPlayerId: string;
     // dartsThrownInTurn: number; // 0, 1, 2, or 3
     // winnerId: string | null;
     history: unknown[];
-    startGame: (config: Partial<GameStateZustand>) => void;
+    startGame: (config: Partial<GameState>) => void;
     throwDart: (points: number) => void;
 }
 
-const dummyPlayers: PlayerZustand[] = [
+const dummyPlayers: Player[] = [
     {
         id: '1',
         name: 'Player 1',
@@ -39,8 +40,10 @@ const dummyPlayers: PlayerZustand[] = [
     },
 ];
 
-const useGameStore = create<GameStateZustand>((set) => ({
-    mode: '501',
+const useGameStore = create<GameState>()(
+    persist(
+        (set) => ({
+            mode: '501',
     bestOfLegs: 3,
     bestOfSets: 3,
     startScore: undefined,
@@ -49,7 +52,7 @@ const useGameStore = create<GameStateZustand>((set) => ({
     currentPlayerId: '',
     history: [],
 
-    startGame: (config: Partial<GameStateZustand>) => set((state) => ({
+    startGame: (config: Partial<GameState>) => set((state) => ({
         ...state,
         mode: config.mode ,
         bestOfLegs: config.bestOfLegs,
@@ -61,7 +64,41 @@ const useGameStore = create<GameStateZustand>((set) => ({
     throwDart: (points: number) => {
         console.log(points);
     }
-}))
+        }), {
+            name: 'current-game',
+            storage: createJSONStorage(() => localStorage),
+        }
+    )
+)
+
+// const useGameStore = create<GameState>(
+//     persist((set) => ({
+//         mode: '501',
+//         bestOfLegs: 3,
+//         bestOfSets: 3,
+//         startScore: undefined,
+//         inputFormat: 'score',
+//         players: dummyPlayers,
+//         currentPlayerId: '',
+//         history: [],
+    
+//         startGame: (config: Partial<GameState>) => set((state) => ({
+//             ...state,
+//             mode: config.mode ,
+//             bestOfLegs: config.bestOfLegs,
+//             bestOfSets: config.bestOfSets,
+//             startScore: config.startScore,
+//             inputFormat: config.inputFormat,
+//         })),
+    
+//         throwDart: (points: number) => {
+//             console.log(points);
+//         }
+//     }), {
+//         name: 'current-game',
+//         storage: createJSONStorage(() => localStorage),
+//     }
+// ))
 
 export default useGameStore;
 
