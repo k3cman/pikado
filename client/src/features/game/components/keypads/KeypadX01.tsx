@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Keypad } from "./Keypad";
 import { useClearStorage, useResetGame } from "../../store/useGameStore";
+import { ForwardIcon } from "lucide-react";
 
 interface KeypadProps {
   onPress: (points: number) => void;
@@ -8,18 +9,19 @@ interface KeypadProps {
 }
 
 export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
-  // Local state for the multiplier (Double/Triple)
-  const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
   const singleKeypad = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
   ];
   const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6, 58, 45, 7, 8, 9, 100];
+  const [pointsToSubmit, setPointsToSubmit] = useState<string | null>(null);
   const resetGame = useResetGame();
   const clearStorage = useClearStorage();
 
   const handleNumClick = (points: number) => {
-    onPress(points * multiplier);
-    setMultiplier(1); // Reset to Single after throw
+    setPointsToSubmit((prev) =>
+      prev ? prev + points.toString() : points.toString()
+    );
+    // onPress(points);
   };
 
   const handleReset = () => {
@@ -37,24 +39,17 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
   return (
     <Keypad>
       <Keypad.Section>
-        <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+        <div className="grid grid-cols-5 gap-1 flex-shrink-0 h-18">
           <button
-            onClick={handleReset}
-            className={`${baseBtn} bg-blue-600 text-white border-b-4 border-blue-800 text-xs sm:text-sm`}
-          >
-            RESET
-          </button>
-          <button
-            onClick={handleRestart}
-            className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-xs sm:text-sm`}
-          >
-            RESTART
-          </button>
-          <button
-            className={`${baseBtn} bg-red-900/50 text-red-300 border-b-4 border-red-950 text-xs sm:text-sm`}
+            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-xs sm:text-sm`}
           >
             UNDO
           </button>
+          <div
+            className={`flex items-center justify-center font-bold text-[2em] rounded-lg col-span-4 bg-indigo-900 text-gray-300 border-b-4 border-indigo-950 text-sm sm:text-base`}
+          >
+            {pointsToSubmit}
+          </div>
         </div>
       </Keypad.Section>
       <Keypad.Grid
@@ -62,94 +57,42 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
         onNumberPress={handleNumClick}
       />
       <Keypad.Section>
-        <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
+        <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-18">
           <button
-            onClick={() => handleNumClick(25)}
-            className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-sm sm:text-base`}
+            onClick={() => setPointsToSubmit(null)}
+            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
           >
-            BULL
+            CLR
           </button>
           <button
             onClick={() => handleNumClick(0)}
             className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
           >
-            0
+            O
           </button>
-          <button
-            onClick={() => {
-              setMultiplier(1);
-              handleNumClick(0);
-            }}
-            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
-          >
-            MISS
-          </button>
+          {pointsToSubmit && pointsToSubmit !== "0" ? (
+            <button
+              onClick={() => {
+                onPress(parseInt(pointsToSubmit ?? "0"));
+                setPointsToSubmit(null);
+              }}
+              className={`${baseBtn} bg-green-900 text-white border-b-4 border-green-950 text-sm sm:text-base`}
+            >
+              OK
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setPointsToSubmit(null);
+                onPress(0);
+              }}
+              className={`${baseBtn} bg-red-900 text-white border-b-4 border-red-950 text-sm sm:text-base`}
+            >
+              NO SCORE
+            </button>
+          )}
         </div>
       </Keypad.Section>
     </Keypad>
-    // <div className="flex flex-col h-full bg-black p-2 gap-1 overflow-hidden">
-
-    //     {/* 1. Multiplier Row */}
-    //     {inputFormat === 'single' && (<div className="grid grid-cols-3 gap-1 flex-shrink-0 h-14">
-    //         <button
-    //             onClick={() => toggleMultiplier(2)}
-    //             className={`${baseBtn} ${multiplier === 2 ? 'bg-green-500 text-black border-green-700 translate-y-1 border-b-0' : 'bg-gray-800 text-green-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
-    //         >
-    //             DOUBLE (x2)
-    //         </button>
-    //         <button
-    //             onClick={() => toggleMultiplier(3)}
-    //             className={`${baseBtn} ${multiplier === 3 ? 'bg-orange-500 text-black border-orange-700 translate-y-1 border-b-0' : 'bg-gray-800 text-orange-500 border-b-4 border-gray-900'} text-xs sm:text-sm`}
-    //         >
-    //             TRIPLE (x3)
-    //         </button>
-    //         <button
-    //             onClick={onUndo}
-    //             className={`${baseBtn} bg-red-900/50 text-red-300 border-b-4 border-red-950 text-xs sm:text-sm`}
-    //         >
-    //             UNDO
-    //         </button>
-    //     </div>)}
-
-    //     {/* 2. Number Grid (1-20) */}
-    //     <div className="flex-1 min-h-0 grid grid-cols-5 gap-1">
-    //         {inputFormat === 'single' ? singleKeypad.map((num) => (
-    //             <button
-    //                 key={num}
-    //                 onClick={() => handleNumClick(num)}
-    //                 className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
-    //             >
-    //                 {num}
-    //             </button>
-    //         )) : scoreKeypad.map((num) => (
-    //             <button
-    //                 key={num}
-    //                 onClick={() => handleNumClick(num)}
-    //                 className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
-    //             >
-    //                 {num}
-    //             </button>
-    //         ))}
-    //     </div>
-
-    //     {/* 3. Bottom Row (Bull & Miss) */}
-    //     <div className="grid grid-cols-2 gap-1 flex-shrink-0 h-14">
-    //         <button
-    //             onClick={() => handleNumClick(25)}
-    //             className={`${baseBtn} bg-red-600 text-white border-b-4 border-red-800 text-sm sm:text-base`}
-    //         >
-    //             BULL
-    //         </button>
-    //         <button
-    //             onClick={() => {
-    //                 setMultiplier(1);
-    //                 handleNumClick(0);
-    //             }}
-    //             className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
-    //         >
-    //             MISS
-    //         </button>
-    //     </div>
-    // </div>
   );
 };

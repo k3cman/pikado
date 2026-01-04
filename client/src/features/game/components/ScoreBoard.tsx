@@ -6,7 +6,7 @@ export const ScoreBoard: React.FC = () => {
   const { players, currentPlayerId } = usePlayers();
 
   return (
-    <div className="w-full grid grid-cols-2 gap-4 p-4 bg-gray-900 text-white shadow-lg">
+    <div className="w-full h-full grid grid-cols-2 gap-4 p-4 bg-gray-900 text-white shadow-lg">
       {players.map((player) => {
         const isCurrent = player.id === currentPlayerId;
 

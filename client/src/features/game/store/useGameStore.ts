@@ -14,11 +14,10 @@ export interface GameState {
   mode: "501" | "cricket";
   bestOfLegs: number;
   bestOfSets: number;
-  startScore: "301" | "101" | "701" | undefined;
+  startScore: "301" | "501" | "701" | undefined;
   inputFormat: "score" | "single" | undefined;
   players: Player[];
   currentPlayerId: string;
-  dartsThrownInTurn: number;
   winnerId: string | null;
   history: unknown[];
   startGame: (config: Partial<GameState>) => void;
@@ -32,14 +31,14 @@ const dummyPlayers: Player[] = [
   {
     id: "1",
     name: "Player 1",
-    score: 101,
-    scoreAtStartOfTurn: 101,
+    score: 501,
+    scoreAtStartOfTurn: 501,
   },
   {
     id: "2",
     name: "Player 2",
-    score: 101,
-    scoreAtStartOfTurn: 101,
+    score: 501,
+    scoreAtStartOfTurn: 501,
   },
 ];
 
@@ -52,7 +51,6 @@ const useGameStore = create<GameState>()(
       startScore: undefined,
       inputFormat: "score",
       players: dummyPlayers,
-      dartsThrownInTurn: 0,
       currentPlayerId: "1",
       winnerId: null,
       history: [],
@@ -79,7 +77,6 @@ const useGameStore = create<GameState>()(
 
           return {
             ...state,
-            dartsThrownInTurn: 0,
             currentPlayerId: nextPlayer.id,
             // Snapshot score for next turn (for bust calculation)
             players: state.players.map((p) =>
@@ -93,11 +90,11 @@ const useGameStore = create<GameState>()(
         const startScore =
           state.startScore === "301"
             ? 301
-            : state.startScore === "101"
-            ? 101
+            : state.startScore === "501"
+            ? 501
             : state.startScore === "701"
             ? 701
-            : 101;
+            : 501;
 
         set({
           ...state,
@@ -107,7 +104,6 @@ const useGameStore = create<GameState>()(
             scoreAtStartOfTurn: startScore,
           })),
           currentPlayerId: state.players[0]?.id || "1",
-          dartsThrownInTurn: 0,
           winnerId: null,
           history: [],
         });
@@ -137,25 +133,7 @@ const useGameStore = create<GameState>()(
         const newScore = player.score - totalPoints;
 
         // CHECK 1: Valid Shot (Score > 1)
-        if (newScore > 1) {
-          set((state) => ({
-            ...state,
-            players: state.players.map((p) =>
-              p.id === state.currentPlayerId ? { ...p, score: newScore } : p
-            ),
-            dartsThrownInTurn: state.dartsThrownInTurn + 1,
-          }));
-
-          // Check if turn is over (3 darts thrown)
-          const updatedState = get();
-          if (updatedState.dartsThrownInTurn >= 3) {
-            get().endTurn();
-          }
-        }
-        // CHECK 2: WINNING SHOT (Score is exactly 0)
-        // Note: Keypad already handles multiplier, so if we get here with 0,
-        // it means it was a valid finish (double out)
-        else if (newScore === 0) {
+        if (newScore === 0) {
           set((state) => ({
             ...state,
             players: state.players.map((p) =>
@@ -163,9 +141,13 @@ const useGameStore = create<GameState>()(
             ),
             winnerId: state.currentPlayerId,
           }));
+          // Game over, don't switch players
+          return;
         }
-        // CHECK 3: BUST (Score < 0 OR Score is 1)
-        else {
+        // CHECK 2: WINNING SHOT (Score is exactly 0)
+        // Note: Keypad already handles multiplier, so if we get here with 0,
+        // it means it was a valid finish (double out)
+        if (newScore < 0 || newScore === 1) {
           // Reset score to what it was at start of turn
           set((state) => ({
             ...state,
@@ -175,9 +157,18 @@ const useGameStore = create<GameState>()(
                 : p
             ),
           }));
-          // End turn immediately (Bust ends your turn)
-          get().endTurn();
         }
+        // CHECK 3: BUST (Score < 0 OR Score is 1)
+        else {
+          set((state) => ({
+            ...state,
+            players: state.players.map((p) =>
+              p.id === state.currentPlayerId ? { ...p, score: newScore } : p
+            ),
+          }));
+        }
+
+        get().endTurn();
       },
     }),
     {
@@ -186,35 +177,6 @@ const useGameStore = create<GameState>()(
     }
   )
 );
-
-// const useGameStore = create<GameState>(
-//     persist((set) => ({
-//         mode: '501',
-//         bestOfLegs: 3,
-//         bestOfSets: 3,
-//         startScore: undefined,
-//         inputFormat: 'score',
-//         players: dummyPlayers,
-//         currentPlayerId: '',
-//         history: [],
-
-//         startGame: (config: Partial<GameState>) => set((state) => ({
-//             ...state,
-//             mode: config.mode ,
-//             bestOfLegs: config.bestOfLegs,
-//             bestOfSets: config.bestOfSets,
-//             startScore: config.startScore,
-//             inputFormat: config.inputFormat,
-//         })),
-
-//         throwDart: (points: number) => {
-//             console.log(points);
-//         }
-//     }), {
-//         name: 'current-game',
-//         storage: createJSONStorage(() => localStorage),
-//     }
-// ))
 
 export default useGameStore;
 
@@ -242,5 +204,6 @@ export const useGameConfig = () =>
       bestOfSets: state.bestOfSets,
       startScore: state.startScore,
       inputFormat: state.inputFormat,
+      winnerId: state.winnerId,
     }))
   );
