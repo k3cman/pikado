@@ -6,7 +6,11 @@ import type { GameFormData } from "../types";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { GamePlayers } from "../components/GamePlayers";
-import { useStartGame, type Player as GamePlayer } from "../store/useGameStore";
+import {
+  useCreateMatch,
+  useStartGame,
+  type Player as GamePlayer,
+} from "../store/useGameStore";
 import {
   useFetchPlayers,
   usePlayers,
@@ -30,6 +34,7 @@ export default function GameSetupPage() {
   }, [fetchPlayers]);
   const { mode } = useParams<{ mode: "501" | "cricket" | undefined }>();
   const startGame = useStartGame();
+  const createMatch = useCreateMatch();
 
   const players = usePlayers();
   const [player1Id, setPlayer1Id] = useState<string>("");
@@ -65,6 +70,8 @@ export default function GameSetupPage() {
       inputFormat: getValues().inputFormat,
       players: gamePlayers.length > 0 ? gamePlayers : undefined,
     });
+
+    createMatch();
 
     navigate(`/game/play/${mode}`);
   };
