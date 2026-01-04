@@ -8,6 +8,16 @@ interface KeypadProps {
   inputFormat: "score" | "single";
 }
 
+const BASE_BUTTON_CLASS =
+  "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
+
+const BUTTON_VARIANTS = {
+  gray: "bg-gray-600 text-gray-300 border-b-4 border-gray-800",
+  green: "bg-green-900 text-white border-b-4 border-green-950",
+  red: "bg-red-900 text-white border-b-4 border-red-950",
+  display: "bg-indigo-900 text-gray-300 border-b-4 border-indigo-950",
+} as const;
+
 export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
   const singleKeypad = [
     1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
@@ -33,20 +43,18 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
   };
 
   // Styles for the buttons - using min-h-0 for flex scaling
-  const baseBtn =
-    "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
 
   return (
     <Keypad>
       <Keypad.Section>
         <div className="grid grid-cols-5 gap-1 flex-shrink-0 h-18">
           <button
-            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-xs sm:text-sm`}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-xs sm:text-sm`}
           >
             UNDO
           </button>
           <div
-            className={`flex items-center justify-center font-bold text-[2em] rounded-lg col-span-4 bg-indigo-900 text-gray-300 border-b-4 border-indigo-950 text-sm sm:text-base`}
+            className={`flex items-center justify-center font-bold text-[2em] rounded-lg col-span-4 ${BUTTON_VARIANTS.display} text-sm sm:text-base`}
           >
             {pointsToSubmit}
           </div>
@@ -60,13 +68,13 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
         <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-18">
           <button
             onClick={() => setPointsToSubmit(null)}
-            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-sm sm:text-base`}
           >
             CLR
           </button>
           <button
             onClick={() => handleNumClick(0)}
-            className={`${baseBtn} bg-gray-600 text-gray-300 border-b-4 border-gray-800 text-sm sm:text-base`}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-sm sm:text-base`}
           >
             O
           </button>
@@ -76,7 +84,7 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
                 onPress(parseInt(pointsToSubmit ?? "0"));
                 setPointsToSubmit(null);
               }}
-              className={`${baseBtn} bg-green-900 text-white border-b-4 border-green-950 text-sm sm:text-base`}
+              className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.green} text-sm sm:text-base`}
             >
               OK
             </button>
@@ -86,7 +94,7 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
                 setPointsToSubmit(null);
                 onPress(0);
               }}
-              className={`${baseBtn} bg-red-900 text-white border-b-4 border-red-950 text-sm sm:text-base`}
+              className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.red} text-sm sm:text-base`}
             >
               NO SCORE
             </button>
