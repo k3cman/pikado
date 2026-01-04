@@ -7,6 +7,7 @@ function App() {
 
   const menuItems = [
     { label: "Play Game", to: "/game", variant: "primary" as const },
+    { label: "Players", to: "/players", variant: "default" as const },
     { label: "Scoreboard", to: "/scoreboard", variant: "default" as const },
     { label: "Statistics", to: "/statistics", variant: "default" as const },
     { label: "Profile", to: "/profile", variant: "default" as const },
@@ -21,7 +22,9 @@ function App() {
 
       {user ? (
         <div>
-          <p>Welcome, {user.email}</p>
+          <p className="uppercase">
+            Welcome {user.user_metadata?.display_name ?? user.email}
+          </p>
         </div>
       ) : (
         <div>

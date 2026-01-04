@@ -9,6 +9,8 @@ import SelectGamePage from "@/features/game/pages/SelectGamePage";
 import GameSetupPage from "@/features/game/pages/GameSetupPage";
 import LoginPage from "@/pages/Login";
 import { requireAuth } from "./guards";
+import { PlayersPage } from "@/features/players/pages/PlayersPage";
+import { AddPlayerPage } from "@/features/players/pages/AddPlayerPage";
 
 const router = createBrowserRouter([
   {
@@ -34,6 +36,16 @@ const router = createBrowserRouter([
       {
         path: "/game/play/:mode",
         Component: GamePage,
+      },
+      {
+        path: "/players",
+        Component: PlayersPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/players/add",
+        Component: AddPlayerPage,
+        loader: requireAuth,
       },
       {
         path: "/scoreboard",
