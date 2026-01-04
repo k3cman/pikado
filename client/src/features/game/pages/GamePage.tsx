@@ -19,7 +19,7 @@ export default function GamePage() {
         <Button
           className="mt-4"
           variant="primary"
-          onClick={() => navigate("/game/setup")}
+          onClick={() => navigate("/game")}
         >
           Play Again
         </Button>

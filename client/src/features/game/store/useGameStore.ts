@@ -27,21 +27,6 @@ export interface GameState {
   clearStorage: () => void; // Clear localStorage
 }
 
-const dummyPlayers: Player[] = [
-  {
-    id: "1",
-    name: "Player 1",
-    score: 501,
-    scoreAtStartOfTurn: 501,
-  },
-  {
-    id: "2",
-    name: "Player 2",
-    score: 501,
-    scoreAtStartOfTurn: 501,
-  },
-];
-
 const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -50,7 +35,7 @@ const useGameStore = create<GameState>()(
       bestOfSets: 3,
       startScore: undefined,
       inputFormat: "score",
-      players: dummyPlayers,
+      players: [] as Player[],
       currentPlayerId: "1",
       winnerId: null,
       history: [],
@@ -63,6 +48,9 @@ const useGameStore = create<GameState>()(
           bestOfSets: config.bestOfSets,
           startScore: config.startScore,
           inputFormat: config.inputFormat,
+          players: config.players,
+          winnerId: null,
+          history: [],
         })),
 
       endTurn: () =>
