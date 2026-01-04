@@ -62,7 +62,7 @@
 - [ ] Add player deletion
 - [ ] Use `useState` for local player management
 - [ ] Later: Connect to Zustand store
-- [ ] Later: Connect to Supabase for persistence
+- [ ] Later: Connect to Supabase for persistencesse
 
 **Learning Points:**
 

@@ -7,42 +7,51 @@ import { createBrowserRouter } from "react-router";
 import { RootLayout } from "@/components/layouts/RootLayout";
 import SelectGamePage from "@/features/game/pages/SelectGamePage";
 import GameSetupPage from "@/features/game/pages/GameSetupPage";
+import LoginPage from "@/pages/Login";
+import { requireAuth } from "./guards";
 
 const router = createBrowserRouter([
-    {
-        path: '/',
-        Component: RootLayout,
-        children: [
-            {
-                index: true,
-                Component: App,
-            },
-            {
-                path: '/game',
-                Component: SelectGamePage,
-            },
-            {
-                path: '/game/setup/:mode',
-                Component: GameSetupPage,
-            },
-            {
-                path: '/game/play/:mode',
-                Component: GamePage,
-            },
-            {
-                path: '/scoreboard',
-                Component: ScoreboardPage,
-            },
-            {
-                path: '/statistics',
-                Component: StatisticsPage,
-            },
-            {
-                path: '/profile',
-                Component: ProfilePage,
-            },
-        ]
-    },
-])
+  {
+    path: "/",
+    Component: RootLayout,
+    children: [
+      {
+        index: true,
+        Component: App,
+      },
+      {
+        path: "/login",
+        Component: LoginPage,
+      },
+      {
+        path: "/game",
+        Component: SelectGamePage,
+      },
+      {
+        path: "/game/setup/:mode",
+        Component: GameSetupPage,
+      },
+      {
+        path: "/game/play/:mode",
+        Component: GamePage,
+      },
+      {
+        path: "/scoreboard",
+        Component: ScoreboardPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/statistics",
+        Component: StatisticsPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/profile",
+        Component: ProfilePage,
+        loader: requireAuth,
+      },
+    ],
+  },
+]);
 
 export default router;
