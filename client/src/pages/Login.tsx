@@ -27,7 +27,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen flex flex-col items-center justify-center">
+    <div className="h-screen flex flex-col items-center justify-center p-5">
       <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-4">
         Sign In
       </h1>

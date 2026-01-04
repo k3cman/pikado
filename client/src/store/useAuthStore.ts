@@ -17,6 +17,11 @@ interface AuthState {
   ) => Promise<{ error: AuthError | null; success: boolean }>;
   signOut: () => Promise<void>;
   initialize: () => Promise<void>;
+  updateUser: ({
+    displayName,
+  }: {
+    displayName: string;
+  }) => Promise<{ error: AuthError | null; success: boolean }>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -61,6 +66,28 @@ export const useAuthStore = create<AuthState>()(
 
           return { success: true };
         }
+      },
+
+      updateUser: async ({ displayName }: { displayName: string }) => {
+        const { data, error } = await supabase.auth.updateUser({
+          data: {
+            display_name: displayName,
+          },
+        });
+
+        if (error) {
+          return { error, success: false };
+        }
+
+        if (data.user) {
+          set({
+            user: data.user,
+          });
+
+          return { error: null, success: true };
+        }
+
+        return { error: null, success: false };
       },
 
       signIn: async (email: string, password: string) => {
@@ -109,3 +136,4 @@ export const useAuthLoading = () => useAuthStore((state) => state.loading);
 export const useSignIn = () => useAuthStore((state) => state.signIn);
 export const useSignUp = () => useAuthStore((state) => state.signUp);
 export const useSignOut = () => useAuthStore((state) => state.signOut);
+export const useUpdateUser = () => useAuthStore((state) => state.updateUser);
