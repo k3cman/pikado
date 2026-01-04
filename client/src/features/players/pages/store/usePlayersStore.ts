@@ -10,6 +10,7 @@ interface PlayersState {
   players: Player[];
   fetchPlayers: () => Promise<Player[]>;
   addPlayer: (name: string) => Promise<Player>;
+  deletePlayer: (id: string) => Promise<void>;
   // updatePlayer: (player: Player) => void;
   // deletePlayer: (id: string) => void;
 }
@@ -32,6 +33,11 @@ const usePlayersStore = create<PlayersState>()((set, get) => ({
     set((state) => ({ players: [...state.players, data] }));
     return data;
   },
+  deletePlayer: async (id: string) => {
+    const { error } = await supabase.from("players").delete().eq("id", id);
+    if (error) throw error;
+    set((state) => ({ players: state.players.filter((p) => p.id !== id) }));
+  },
   // addPlayer: (player) => {
   //     set((state) => ({ players: [...state.players, player] }));
   // },
@@ -44,3 +50,5 @@ export const usePlayers = () => usePlayersStore((state) => state.players);
 export const useFetchPlayers = () =>
   usePlayersStore((state) => state.fetchPlayers);
 export const useAddPlayer = () => usePlayersStore((state) => state.addPlayer);
+export const useDeletePlayer = () =>
+  usePlayersStore((state) => state.deletePlayer);

@@ -4,6 +4,7 @@ import {
   useFetchPlayers,
   usePlayers,
   type Player,
+  useDeletePlayer,
 } from "./store/usePlayersStore";
 import { useEffect } from "react";
 import { PencilIcon, TrashIcon } from "lucide-react";
@@ -11,6 +12,7 @@ import { PencilIcon, TrashIcon } from "lucide-react";
 export const PlayersPage = () => {
   const players = usePlayers();
   const fetchPlayers = useFetchPlayers();
+  const deletePlayer = useDeletePlayer();
   useEffect(() => {
     fetchPlayers();
   }, [fetchPlayers]);
@@ -31,7 +33,11 @@ export const PlayersPage = () => {
                 <Button variant="primary" size="sm">
                   <PencilIcon className="w-4 h-4" />
                 </Button>
-                <Button variant="danger" size="sm">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => deletePlayer(player.id)}
+                >
                   <TrashIcon className="w-4 h-4" />
                 </Button>
               </div>
