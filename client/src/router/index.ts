@@ -12,9 +12,10 @@ import { requireAuth } from "./guards";
 import { PlayersPage } from "@/features/players/pages/PlayersPage";
 import { AddPlayerPage } from "@/features/players/pages/AddPlayerPage";
 
-const router = createBrowserRouter([
-  {
-    path: "/",
+const router = createBrowserRouter(
+  [
+    {
+      path: "/",
     Component: RootLayout,
     children: [
       {
@@ -64,6 +65,8 @@ const router = createBrowserRouter([
       },
     ],
   },
-]);
+  ],
+  { basename: (import.meta.env.BASE_URL || "/").replace(/\/$/, "") || "/" }
+);
 
 export default router;

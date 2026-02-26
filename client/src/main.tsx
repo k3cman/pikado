@@ -15,8 +15,9 @@ createRoot(document.getElementById("root")!).render(
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
+    const base = import.meta.env.BASE_URL;
     navigator.serviceWorker
-      .register("/sw.js")
+      .register(`${base}sw.js`)
       .catch((err) =>
         console.error("Service worker registration failed:", err)
       );
