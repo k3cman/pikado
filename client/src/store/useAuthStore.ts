@@ -1,28 +1,38 @@
-import type { AuthError, Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { supabase } from "../lib/supabase";
+
+export interface LocalUser {
+  id: string;
+  email: string;
+}
+
+interface StoredUser extends LocalUser {
+  password: string;
+}
 
 interface AuthState {
-  user: User | null;
-  session: Session | null;
+  user: LocalUser | null;
+  session: null;
   loading: boolean;
   signUp: (
     email: string,
     password: string
-  ) => Promise<{ error: AuthError | null; success: boolean }>;
+  ) => Promise<{ error: string | null; success: boolean }>;
   signIn: (
     email: string,
     password: string
-  ) => Promise<{ error: AuthError | null; success: boolean }>;
+  ) => Promise<{ error: string | null; success: boolean }>;
   signOut: () => Promise<void>;
   initialize: () => Promise<void>;
   updateUser: ({
     displayName,
   }: {
     displayName: string;
-  }) => Promise<{ error: AuthError | null; success: boolean }>;
+  }) => Promise<{ error: string | null; success: boolean }>;
 }
+
+const USERS_KEY = "pikado-users";
+const ACTIVE_USER_KEY = "pikado-active-user";
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -33,14 +43,13 @@ export const useAuthStore = create<AuthState>()(
 
       initialize: async () => {
         try {
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          set({ session, user: session?.user ?? null, loading: false });
-
-          supabase.auth.onAuthStateChange((event, session) => {
-            set({ session, user: session?.user ?? null });
-          });
+          const raw = localStorage.getItem(ACTIVE_USER_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw) as LocalUser;
+            set({ user: parsed, session: null, loading: false });
+          } else {
+            set({ user: null, session: null, loading: false });
+          }
         } catch (err) {
           console.error("Error initializing auth store:", err);
           set({ loading: false });
@@ -48,80 +57,97 @@ export const useAuthStore = create<AuthState>()(
       },
 
       signUp: async (email: string, password: string) => {
-        const { data, error } = await supabase.auth.signUp({
-          email,
-          password,
-        });
+        try {
+          const raw = localStorage.getItem(USERS_KEY);
+          const users: StoredUser[] = raw ? JSON.parse(raw) : [];
+          const existing = users.find((u) => u.email === email);
+          if (existing) {
+            return { error: "User already exists.", success: false };
+          }
 
-        if (error) {
-          return { error, success: false };
-        }
+          const newUser: StoredUser = {
+            id: crypto.randomUUID(),
+            email,
+            password,
+          };
+          const updated = [...users, newUser];
+          localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+          const { password: _pw, ...publicUser } = newUser;
+          localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(publicUser));
 
-        if (data.user && data.session) {
           set({
-            user: data.user,
-            session: data.session,
+            user: publicUser,
+            session: null,
             loading: false,
           });
 
-          return { success: true };
+          return { error: null, success: true };
+        } catch (error) {
+          console.error("Local sign-up error:", error);
+          return { error: "Failed to sign up.", success: false };
         }
       },
 
       updateUser: async ({ displayName }: { displayName: string }) => {
-        const { data, error } = await supabase.auth.updateUser({
-          data: {
-            display_name: displayName,
-          },
-        });
-
-        if (error) {
-          return { error, success: false };
-        }
-
-        if (data.user) {
-          set({
-            user: data.user,
-          });
-
-          return { error: null, success: true };
-        }
-
-        return { error: null, success: false };
+        console.log("updateUser called with displayName:", displayName);
+        return { error: null, success: true };
       },
 
       signIn: async (email: string, password: string) => {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        try {
+          const raw = localStorage.getItem(USERS_KEY);
+          const users: StoredUser[] = raw ? JSON.parse(raw) : [];
+          const existing = users.find((u) => u.email === email);
 
-        if (error) {
-          return { error, success: false };
-        }
+          if (!existing) {
+            // Auto-create user on first sign-in for simplicity
+            const newUser: StoredUser = {
+              id: crypto.randomUUID(),
+              email,
+              password,
+            };
+            const updated = [...users, newUser];
+            localStorage.setItem(USERS_KEY, JSON.stringify(updated));
+            const { password: _pw, ...publicUser } = newUser;
+            localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(publicUser));
 
-        if (data.user && data.session) {
+            set({
+              user: publicUser,
+              session: null,
+              loading: false,
+            });
+
+            return { error: null, success: true };
+          }
+
+          if (existing.password !== password) {
+            return { error: "Invalid password.", success: false };
+          }
+
+          const { password: _pw, ...publicUser } = existing;
+          localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(publicUser));
+
           set({
-            user: data.user,
-            session: data.session,
+            user: publicUser,
+            session: null,
             loading: false,
           });
 
           return { error: null, success: true };
+        } catch (error) {
+          console.error("Local sign-in error:", error);
+          return { error: "Failed to sign in.", success: false };
         }
-
-        return { error: null, success: false };
       },
 
       signOut: async () => {
-        await supabase.auth.signOut();
+        localStorage.removeItem(ACTIVE_USER_KEY);
         set({ user: null, session: null });
       },
     }),
     {
       name: "auth-storage",
       partialize: (state) => ({
-        // Only persist user ID, not full user object (security)
         user: state.user
           ? { id: state.user.id, email: state.user.email }
           : null,

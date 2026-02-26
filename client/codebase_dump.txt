@@ -1,0 +1,2913 @@
+Project Scan Timestamp: 2026-01-04T19:31:36.168Z
+
+
+================================================================================
+FILE: components.json
+================================================================================
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "new-york",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "registries": {}
+}
+
+
+
+================================================================================
+FILE: eslint.config.js
+================================================================================
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+
+
+================================================================================
+FILE: package.json
+================================================================================
+{
+  "name": "client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "^1.3.3",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-select": "^2.2.6",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@supabase/supabase-js": "^2.89.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "axios": "^1.13.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.555.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-hook-form": "^7.68.0",
+    "react-router": "^7.10.1",
+    "tailwind-merge": "^3.4.0",
+    "tailwindcss": "^4.1.17",
+    "zod": "^4.1.13",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react-swc": "^4.2.2",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.4.24",
+    "globals": "^16.5.0",
+    "tw-animate-css": "^1.4.0",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "^8.46.4",
+    "vite": "^7.2.4"
+  }
+}
+
+
+================================================================================
+FILE: src/App.tsx
+================================================================================
+import { Link } from "react-router";
+import { Button } from "./components/ui/button";
+import { useUser } from "./store/useAuthStore";
+
+function App() {
+  const user = useUser();
+
+  const menuItems = [
+    { label: "Play Game", to: "/game", variant: "primary" as const },
+    { label: "Players", to: "/players", variant: "default" as const },
+    { label: "Scoreboard", to: "/scoreboard", variant: "default" as const },
+    { label: "Statistics", to: "/statistics", variant: "default" as const },
+    { label: "Profile", to: "/profile", variant: "default" as const },
+  ];
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-6">
+      {/* App Title */}
+      <h1 className="text-5xl font-black text-white uppercase tracking-wider mb-4 drop-shadow-lg">
+        Game<span className="text-blue-500">Shot</span>
+      </h1>
+
+      {user ? (
+        <div>
+          <p className="uppercase">
+            Welcome {user.user_metadata?.display_name ?? user.email}
+          </p>
+        </div>
+      ) : (
+        <div>
+          <p>Please sign in to continue</p>
+        </div>
+      )}
+      {/* Navigation Menu */}
+      <nav className="flex flex-col gap-4 w-full max-w-xs mt-8">
+        {menuItems.map((item) => (
+          <Link key={item.label} to={item.to}>
+            <Button variant={item.variant} size="lg" className="w-full">
+              {item.label}
+            </Button>
+          </Link>
+        ))}
+      </nav>
+    </div>
+  );
+}
+
+export default App;
+
+
+
+================================================================================
+FILE: src/components/auth/ProtectedRoute.tsx
+================================================================================
+import { useUser, useAuthLoading } from "@/store/useAuthStore";
+import { Navigate } from "react-router";
+
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const user = useUser();
+  const loading = useAuthLoading();
+
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-black">
+        <div className="text-white text-xl">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" />;
+  }
+
+  return <>{children}</>;
+}
+
+
+
+================================================================================
+FILE: src/components/layouts/RootLayout.tsx
+================================================================================
+import { Outlet, useNavigate, useLocation } from "react-router"
+import { ArrowLeft } from "lucide-react"
+
+export function RootLayout() {
+    const navigate = useNavigate()
+    const location = useLocation()
+    const isHome = location.pathname === "/"
+    const isGamePlay = location.pathname.startsWith("/game/play")
+    const showBackButton = !isHome && !isGamePlay
+
+    return (
+        <main className="min-h-screen bg-black text-white">
+            {/* Back Button - hidden on home page and game play */}
+            {showBackButton && (
+                <button
+                    onClick={() => navigate(-1)}
+                    className="fixed top-4 left-4 p-2 text-white hover:text-gray-300 transition-colors z-50"
+                    aria-label="Go back"
+                >
+                    <ArrowLeft size={28} />
+                </button>
+            )}
+            <Outlet />
+        </main>
+    )
+}
+
+
+================================================================================
+FILE: src/components/ui/button.tsx
+================================================================================
+import * as React from "react"
+import { Slot } from "@radix-ui/react-slot"
+import { cn } from "@/lib/utils"
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: "default" | "double" | "triple" | "danger" | "muted" | "primary"
+  size?: "default" | "sm" | "lg"
+  asChild?: boolean
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant = "default", size = "default", asChild = false, ...props }, ref) => {
+    const Comp = asChild ? Slot : "button"
+
+    const baseStyles = "rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none disabled:opacity-50 disabled:pointer-events-none"
+
+    const variants = {
+      default: "bg-gray-700 text-white border-b-4 border-gray-900 hover:bg-gray-600",
+      double: "bg-gray-800 text-green-500 border-b-4 border-gray-900 hover:bg-gray-700",
+      triple: "bg-gray-800 text-orange-500 border-b-4 border-gray-900 hover:bg-gray-700",
+      danger: "bg-red-900/50 text-red-300 border-b-4 border-red-950 hover:bg-red-900/70",
+      muted: "bg-gray-600 text-gray-300 border-b-4 border-gray-800 hover:bg-gray-500",
+      primary: "bg-blue-600 text-white border-b-4 border-blue-800 hover:bg-blue-500",
+    }
+
+    const sizes = {
+      default: "h-12 px-6 text-lg",
+      sm: "h-10 px-4 text-base",
+      lg: "h-16 px-8 text-xl",
+    }
+
+    return (
+      <Comp
+        className={cn(baseStyles, variants[variant], sizes[size], className)}
+        ref={ref}
+        {...props}
+      />
+    )
+  }
+)
+Button.displayName = "Button"
+
+export { Button }
+
+
+
+================================================================================
+FILE: src/components/ui/checkbox.tsx
+================================================================================
+import * as React from "react"
+import * as CheckboxPrimitive from "@radix-ui/react-checkbox"
+import { CheckIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Checkbox({
+  className,
+  ...props
+}: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
+  return (
+    <CheckboxPrimitive.Root
+      data-slot="checkbox"
+      className={cn(
+        "peer bg-gray-700 border-gray-600 data-[state=checked]:bg-green-500 data-[state=checked]:text-black data-[state=checked]:border-green-600 focus-visible:border-blue-500 focus-visible:ring-blue-500/50 aria-invalid:ring-red-500/40 aria-invalid:border-red-600 size-8 shrink-0 rounded-md border-2 border-b-4 shadow-sm transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 active:scale-95 touch-manipulation select-none",
+        className
+      )}
+      {...props}
+    >
+      <CheckboxPrimitive.Indicator
+        data-slot="checkbox-indicator"
+        className="grid place-content-center text-current transition-none"
+      >
+        <CheckIcon className="size-6" />
+      </CheckboxPrimitive.Indicator>
+    </CheckboxPrimitive.Root>
+  )
+}
+
+export { Checkbox }
+
+
+
+================================================================================
+FILE: src/components/ui/field.tsx
+================================================================================
+import { useMemo } from "react"
+import { cva, type VariantProps } from "class-variance-authority"
+
+import { cn } from "@/lib/utils"
+import { Label } from "@/components/ui/label"
+import { Separator } from "@/components/ui/separator"
+
+function FieldSet({ className, ...props }: React.ComponentProps<"fieldset">) {
+  return (
+    <fieldset
+      data-slot="field-set"
+      className={cn(
+        "flex flex-col gap-6",
+        "has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldLegend({
+  className,
+  variant = "legend",
+  ...props
+}: React.ComponentProps<"legend"> & { variant?: "legend" | "label" }) {
+  return (
+    <legend
+      data-slot="field-legend"
+      data-variant={variant}
+      className={cn(
+        "mb-3 font-bold text-gray-200",
+        "data-[variant=legend]:text-xl",
+        "data-[variant=label]:text-lg",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldGroup({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="field-group"
+      className={cn(
+        "group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 [&>[data-slot=field-group]]:gap-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+const fieldVariants = cva(
+  "group/field flex w-full gap-3 data-[invalid=true]:text-destructive",
+  {
+    variants: {
+      orientation: {
+        vertical: ["flex-col [&>*]:w-full [&>.sr-only]:w-auto"],
+        horizontal: [
+          "flex-row items-center",
+          "[&>[data-slot=field-label]]:flex-auto",
+          "has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        ],
+        responsive: [
+          "flex-col [&>*]:w-full [&>.sr-only]:w-auto @md/field-group:flex-row @md/field-group:items-center @md/field-group:[&>*]:w-auto",
+          "@md/field-group:[&>[data-slot=field-label]]:flex-auto",
+          "@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px",
+        ],
+      },
+    },
+    defaultVariants: {
+      orientation: "vertical",
+    },
+  }
+)
+
+function Field({
+  className,
+  orientation = "vertical",
+  ...props
+}: React.ComponentProps<"div"> & VariantProps<typeof fieldVariants>) {
+  return (
+    <div
+      role="group"
+      data-slot="field"
+      data-orientation={orientation}
+      className={cn(fieldVariants({ orientation }), className)}
+      {...props}
+    />
+  )
+}
+
+function FieldContent({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="field-content"
+      className={cn(
+        "group/field-content flex flex-1 flex-col gap-1.5 leading-snug",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof Label>) {
+  return (
+    <Label
+      data-slot="field-label"
+      className={cn(
+        "group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50",
+        "has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border-2 has-[>[data-slot=field]]:border-gray-700 [&>*]:data-[slot=field]:p-4",
+        "has-data-[state=checked]:bg-green-500/10 has-data-[state=checked]:border-green-500",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldTitle({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="field-label"
+      className={cn(
+        "flex w-fit items-center gap-2 text-lg leading-snug font-bold text-gray-200 group-data-[disabled=true]/field:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="field-description"
+      className={cn(
+        "text-gray-400 text-base leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance",
+        "last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5",
+        "[&>a:hover]:text-blue-400 [&>a]:underline [&>a]:underline-offset-4",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+function FieldSeparator({
+  children,
+  className,
+  ...props
+}: React.ComponentProps<"div"> & {
+  children?: React.ReactNode
+}) {
+  return (
+    <div
+      data-slot="field-separator"
+      data-content={!!children}
+      className={cn(
+        "relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2",
+        className
+      )}
+      {...props}
+    >
+      <Separator className="absolute inset-0 top-1/2" />
+      {children && (
+        <span
+          className="bg-background text-muted-foreground relative mx-auto block w-fit px-2"
+          data-slot="field-separator-content"
+        >
+          {children}
+        </span>
+      )}
+    </div>
+  )
+}
+
+function FieldError({
+  className,
+  children,
+  errors,
+  ...props
+}: React.ComponentProps<"div"> & {
+  errors?: Array<{ message?: string } | undefined>
+}) {
+  const content = useMemo(() => {
+    if (children) {
+      return children
+    }
+
+    if (!errors?.length) {
+      return null
+    }
+
+    const uniqueErrors = [
+      ...new Map(errors.map((error) => [error?.message, error])).values(),
+    ]
+
+    if (uniqueErrors?.length == 1) {
+      return uniqueErrors[0]?.message
+    }
+
+    return (
+      <ul className="ml-4 flex list-disc flex-col gap-1">
+        {uniqueErrors.map(
+          (error, index) =>
+            error?.message && <li key={index}>{error.message}</li>
+        )}
+      </ul>
+    )
+  }, [children, errors])
+
+  if (!content) {
+    return null
+  }
+
+  return (
+    <div
+      role="alert"
+      data-slot="field-error"
+      className={cn("text-red-400 text-base font-medium", className)}
+      {...props}
+    >
+      {content}
+    </div>
+  )
+}
+
+export {
+  Field,
+  FieldLabel,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLegend,
+  FieldSeparator,
+  FieldSet,
+  FieldContent,
+  FieldTitle,
+}
+
+
+
+================================================================================
+FILE: src/components/ui/input.tsx
+================================================================================
+import * as React from "react"
+
+import { cn } from "@/lib/utils"
+
+function Input({ className, type, ...props }: React.ComponentProps<"input">) {
+  return (
+    <input
+      type={type}
+      data-slot="input"
+      className={cn(
+        "file:text-white placeholder:text-gray-400 selection:bg-blue-600 selection:text-white bg-gray-800 border-gray-600 text-white h-14 w-full min-w-0 rounded-md border-2 border-b-4 border-gray-700 px-5 py-3 text-base shadow-sm transition-all outline-none file:inline-flex file:h-9 file:border-0 file:bg-transparent file:text-base file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
+        "focus-visible:border-blue-500 focus-visible:ring-blue-500/50 focus-visible:ring-[3px] focus-visible:border-b-4",
+        "aria-invalid:ring-red-500/40 aria-invalid:border-red-600",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Input }
+
+
+
+================================================================================
+FILE: src/components/ui/label.tsx
+================================================================================
+import * as React from "react"
+import * as LabelPrimitive from "@radix-ui/react-label"
+
+import { cn } from "@/lib/utils"
+
+function Label({
+  className,
+  ...props
+}: React.ComponentProps<typeof LabelPrimitive.Root>) {
+  return (
+    <LabelPrimitive.Root
+      data-slot="label"
+      className={cn(
+        "flex items-center gap-2 text-lg leading-none font-bold text-gray-200 select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Label }
+
+
+
+================================================================================
+FILE: src/components/ui/select.tsx
+================================================================================
+import * as React from "react"
+import * as SelectPrimitive from "@radix-ui/react-select"
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+
+import { cn } from "@/lib/utils"
+
+function Select({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  return <SelectPrimitive.Root data-slot="select" {...props} />
+}
+
+function SelectGroup({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Group>) {
+  return <SelectPrimitive.Group data-slot="select-group" {...props} />
+}
+
+function SelectValue({
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Value>) {
+  return <SelectPrimitive.Value data-slot="select-value" {...props} />
+}
+
+function SelectTrigger({
+  className,
+  size = "default",
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
+  size?: "sm" | "default"
+}) {
+  return (
+    <SelectPrimitive.Trigger
+      data-slot="select-trigger"
+      data-size={size}
+      className={cn(
+        "border-gray-600 data-[placeholder]:text-gray-400 [&_svg:not([class*='text-'])]:text-gray-400 focus-visible:border-blue-500 focus-visible:ring-blue-500/50 aria-invalid:ring-red-500/40 aria-invalid:border-red-600 bg-gray-700 hover:bg-gray-600 text-white flex w-fit items-center justify-between gap-2 rounded-md border-2 border-b-4 border-gray-800 px-5 py-3 text-base whitespace-nowrap shadow-sm transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-14 data-[size=sm]:h-12 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6 active:scale-95 active:translate-y-1 touch-manipulation select-none font-bold",
+        className
+      )}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDownIcon className="size-6 opacity-70" />
+      </SelectPrimitive.Icon>
+    </SelectPrimitive.Trigger>
+  )
+}
+
+function SelectContent({
+  className,
+  children,
+  position = "item-aligned",
+  align = "center",
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+  return (
+    <SelectPrimitive.Portal>
+      <SelectPrimitive.Content
+        data-slot="select-content"
+        className={cn(
+          "bg-gray-800 text-white border-gray-700 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border-2 shadow-lg",
+          position === "popper" &&
+            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+          className
+        )}
+        position={position}
+        align={align}
+        {...props}
+      >
+        <SelectScrollUpButton />
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-1",
+            position === "popper" &&
+              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1"
+          )}
+        >
+          {children}
+        </SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
+      </SelectPrimitive.Content>
+    </SelectPrimitive.Portal>
+  )
+}
+
+function SelectLabel({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Label>) {
+  return (
+    <SelectPrimitive.Label
+      data-slot="select-label"
+      className={cn("text-gray-400 px-4 py-2.5 text-base font-bold", className)}
+      {...props}
+    />
+  )
+}
+
+function SelectItem({
+  className,
+  children,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+  return (
+    <SelectPrimitive.Item
+      data-slot="select-item"
+      className={cn(
+        "focus:bg-gray-700 focus:text-white [&_svg:not([class*='text-'])]:text-gray-400 relative flex w-full cursor-default items-center gap-2 rounded-sm py-3 pr-12 pl-4 text-base outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2 font-medium",
+        className
+      )}
+      {...props}
+    >
+      <span
+        data-slot="select-item-indicator"
+        className="absolute right-4 flex size-6 items-center justify-center"
+      >
+        <SelectPrimitive.ItemIndicator>
+          <CheckIcon className="size-6 text-green-500" />
+        </SelectPrimitive.ItemIndicator>
+      </span>
+      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    </SelectPrimitive.Item>
+  )
+}
+
+function SelectSeparator({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+  return (
+    <SelectPrimitive.Separator
+      data-slot="select-separator"
+      className={cn("bg-gray-600 pointer-events-none -mx-1 my-1 h-px", className)}
+      {...props}
+    />
+  )
+}
+
+function SelectScrollUpButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
+  return (
+    <SelectPrimitive.ScrollUpButton
+      data-slot="select-scroll-up-button"
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      {...props}
+    >
+      <ChevronUpIcon className="size-6" />
+    </SelectPrimitive.ScrollUpButton>
+  )
+}
+
+function SelectScrollDownButton({
+  className,
+  ...props
+}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
+  return (
+    <SelectPrimitive.ScrollDownButton
+      data-slot="select-scroll-down-button"
+      className={cn(
+        "flex cursor-default items-center justify-center py-1",
+        className
+      )}
+      {...props}
+    >
+      <ChevronDownIcon className="size-5" />
+    </SelectPrimitive.ScrollDownButton>
+  )
+}
+
+export {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+}
+
+
+
+================================================================================
+FILE: src/components/ui/separator.tsx
+================================================================================
+"use client"
+
+import * as React from "react"
+import * as SeparatorPrimitive from "@radix-ui/react-separator"
+
+import { cn } from "@/lib/utils"
+
+function Separator({
+  className,
+  orientation = "horizontal",
+  decorative = true,
+  ...props
+}: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
+  return (
+    <SeparatorPrimitive.Root
+      data-slot="separator"
+      decorative={decorative}
+      orientation={orientation}
+      className={cn(
+        "bg-gray-600 shrink-0 data-[orientation=horizontal]:h-1 data-[orientation=horizontal]:w-full data-[orientation=vertical]:h-full data-[orientation=vertical]:w-1",
+        className
+      )}
+      {...props}
+    />
+  )
+}
+
+export { Separator }
+
+
+
+================================================================================
+FILE: src/features/game/components/GameForm.tsx
+================================================================================
+import { Field, FieldGroup } from "@/components/ui/field"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Controller, type Control, type UseFormRegister } from "react-hook-form"
+import type { GameFormData } from "../types"
+
+
+
+export const GameForm = ({mode, control, register}: {mode: '501' | 'cricket', control: Control<GameFormData>, register: UseFormRegister<GameFormData>}) => {
+    
+
+    // const values = useWatch({control});
+
+    // useEffect(() => {
+    //     console.log(values);
+    //     onFormChange(values);
+    // }, [values, onFormChange]);
+
+    return (
+        <form className="w-full max-w-lg">
+            <FieldGroup>
+                {mode === '501' ? 
+            (<>
+            <Field>
+                <Label>Input Format</Label>
+                <Controller
+                    name="inputFormat"
+                    control={control}
+                    render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a format" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="score">Score</SelectItem>
+                                <SelectItem value="single">Single</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+            </Field>
+            
+            <Field>
+                <Label>Start Score</Label>
+                <Controller
+                    name="startScore"
+                    control={control}
+                    render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a start score" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="301">301</SelectItem>
+                                <SelectItem value="501">501</SelectItem>
+                                <SelectItem value="701">701</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+            </Field>
+            </>
+        ) : (
+            <></>
+        )    
+            }
+
+            <div className="flex gap-4">
+                    <Field>
+                        <Label>Best of Legs</Label>
+                        <Input type="number" min={1} max={10} {...register("bestOfLegs")} defaultValue={3} />
+                    </Field>
+                    <Field>
+                        <Label>Best of Sets</Label>
+                        <Input type="number" min={1} max={10} {...register("bestOfSets")} defaultValue={3} />
+                    </Field>
+            </div>
+            </FieldGroup>
+        </form>
+    )
+}
+
+
+================================================================================
+FILE: src/features/game/components/GamePlayers.tsx
+================================================================================
+// src/features/game/components/GamePlayers.tsx
+import { Field } from "@/components/ui/field";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { Player } from "@/features/players/pages/store/usePlayersStore";
+
+interface GamePlayersProps {
+  players: Player[];
+  player1Id: string;
+  player2Id: string;
+  onPlayer1Change: (playerId: string) => void;
+  onPlayer2Change: (playerId: string) => void;
+}
+
+export const GamePlayers = ({
+  players,
+  player1Id,
+  player2Id,
+  onPlayer1Change,
+  onPlayer2Change,
+}: GamePlayersProps) => {
+  const player1Options = players.filter((p) => p.id !== player2Id);
+  const player2Options = players.filter((p) => p.id !== player1Id);
+
+  return (
+    <div className="w-full grid grid-cols-2 md:grid-cols-2 gap-2 lg:grid-cols-3 mb-4">
+      <Field>
+        <Label>Player 1</Label>
+        <Select value={player1Id} onValueChange={onPlayer1Change}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a player" />
+          </SelectTrigger>
+          <SelectContent>
+            {player1Options.map((player) => (
+              <SelectItem key={player.id} value={player.id}>
+                {player.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field>
+        <Label>Player 2</Label>
+        <Select value={player2Id} onValueChange={onPlayer2Change}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a player" />
+          </SelectTrigger>
+          <SelectContent>
+            {player2Options.map((player) => (
+              <SelectItem key={player.id} value={player.id}>
+                {player.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: src/features/game/components/ScoreBoard.tsx
+================================================================================
+import React from "react";
+import { usePlayers } from "../store/useGameStore";
+
+export const ScoreBoard: React.FC = () => {
+  // READ from Redux
+  const { players, currentPlayerId } = usePlayers();
+
+  return (
+    <div className="w-full h-full grid grid-cols-2 gap-4 p-4 bg-gray-900 text-white shadow-lg">
+      {players.map((player) => {
+        const isCurrent = player.id === currentPlayerId;
+
+        return (
+          <div
+            key={player.id}
+            className={`
+              relative flex flex-col items-center justify-center p-6 rounded-xl border-4 transition-all duration-300
+              ${
+                isCurrent
+                  ? "border-blue-500 bg-gray-800 scale-105 z-10 shadow-[0_0_20px_rgba(59,130,246,0.5)]"
+                  : "border-gray-700 bg-gray-800/50 opacity-60"
+              }
+            `}
+          >
+            {/* Player Name */}
+            <h2 className="text-xl font-bold text-gray-400 uppercase tracking-widest">
+              {player.name}
+            </h2>
+
+            {/* The Big Score Number */}
+            <div
+              className={`text-7xl font-black tracking-tighter my-2 ${
+                isCurrent ? "text-white" : "text-gray-500"
+              }`}
+            >
+              {player.score}
+            </div>
+
+            {/* <div className="flex gap-3 mt-4 h-4">
+                            {isCurrent && [1, 2, 3].map((dartNum) => (
+                                <div
+                                    key={dartNum}
+                                    className={`
+                    w-4 h-4 rounded-full border-2 border-gray-600
+                    ${dartNum <= dartsThrownInTurn ? 'bg-green-500 border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.8)]' : 'bg-transparent'}
+                  `}
+                                />
+                            ))}
+                        </div> */}
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: src/features/game/components/keypads/Keypad.tsx
+================================================================================
+import React from "react";
+import { cn } from "@/lib/utils";
+
+const KeypadSection = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) => {
+  return <div className={cn("flex-shrink-0", className)}>{children}</div>;
+};
+
+const NumberGrid = ({
+  numbers,
+  onNumberPress,
+}: {
+  numbers: number[];
+  onNumberPress: (number: number) => void;
+}) => {
+  return (
+    <div className="flex-1 min-h-0 grid grid-cols-5 gap-1">
+      {numbers.map((number) => (
+        <button
+          key={number}
+          onClick={() => onNumberPress(number)}
+          className="min-h-0 rounded-lg font-bold text-xl transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center bg-gray-700 text-white border-b-4 border-gray-900 hover:bg-gray-600 text-sm sm:text-base"
+        >
+          {number}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const KeypadRoot = ({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}): React.ReactElement => {
+  return (
+    <div
+      className={cn(
+        "flex flex-col h-full bg-black p-2 gap-1 overflow-hidden",
+        className
+      )}
+    >
+      {children}
+    </div>
+  );
+};
+
+export const Keypad = KeypadRoot as typeof KeypadRoot & {
+  Root: typeof KeypadRoot;
+  Section: typeof KeypadSection;
+  Grid: typeof NumberGrid;
+};
+
+Keypad.Root = KeypadRoot;
+Keypad.Section = KeypadSection;
+Keypad.Grid = NumberGrid;
+
+
+
+================================================================================
+FILE: src/features/game/components/keypads/KeypadCricket.tsx
+================================================================================
+import React from 'react';
+
+interface KeypadProps {
+    onPress?: (points: number) => void;
+    onUndo?: () => void;
+}
+
+// Status indicator component
+const StatusIndicator: React.FC<{ hits: number }> = ({ hits }) => {
+    if (hits === 0) {
+        return <div className="flex items-center justify-center"></div>;
+    }
+    if (hits === 1) {
+        return (
+            <div className="flex items-center justify-center text-white text-xl font-bold">
+                /
+            </div>
+        );
+    }
+    if (hits === 2) {
+        return (
+            <div className="flex items-center justify-center text-white text-xl font-bold">
+                ×
+            </div>
+        );
+    }
+    // hits === 3 (closed)
+    return (
+        <div className="flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-black border-2 border-white flex items-center justify-center">
+                <div className="text-white text-sm font-bold">×</div>
+            </div>
+        </div>
+    );
+};
+
+export const KeypadCricket: React.FC<KeypadProps> = ({ onPress }) => {
+    // Styles for the buttons - matching KeypadX01, using min-h-0 for flex scaling
+    const baseBtn = "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
+    const numBtn = "bg-gray-700 text-white border-b-4 border-gray-900 hover:bg-gray-600";
+
+    const handleButtonClick = (points: number, multiplier: number) => {
+        if (onPress) {
+            onPress(points * multiplier);
+        }
+    };
+
+    const handleOk = () => {
+        // Ok button handler - placeholder
+    };
+
+    // Numbers 20-15 for Cricket
+    const cricketNumbers = [20, 19, 18, 17, 16, 15];
+
+    // Placeholder data for status indicators (left and right player hits)
+    // In real implementation, this would come from props or state
+    const getLeftHits = (num: number): number => {
+        // Placeholder: return 0, 1, 2, or 3 based on number
+        const mockData: Record<number, number> = { 20: 3, 19: 3, 18: 0, 17: 0, 16: 3, 15: 0 };
+        return mockData[num] || 0;
+    };
+
+    const getRightHits = (num: number): number => {
+        // Placeholder: return 0, 1, 2, or 3 based on number
+        const mockData: Record<number, number> = { 20: 0, 19: 0, 18: 3, 17: 0, 16: 0, 15: 2 };
+        return mockData[num] || 0;
+    };
+
+    return (
+        <div className="flex flex-col h-full bg-black p-2 gap-1 overflow-hidden">
+            <div className="flex-1 min-h-0 flex flex-col gap-1">
+                {cricketNumbers.map((num) => (
+                    <div key={num} className="grid grid-cols-5 gap-1 flex-1 min-h-0">
+                        {/* Left status column */}
+                        <StatusIndicator hits={getLeftHits(num)} />
+                        
+                        {/* Button columns */}
+                        <button
+                            onClick={() => handleButtonClick(num, 2)}
+                            className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                        >
+                            D{num}
+                        </button>
+                        <button
+                            onClick={() => handleButtonClick(num, 1)}
+                            className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                        >
+                            {num}
+                        </button>
+                        <button
+                            onClick={() => handleButtonClick(num, 3)}
+                            className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                        >
+                            T{num}
+                        </button>
+                        
+                        {/* Right status column */}
+                        <StatusIndicator hits={getRightHits(num)} />
+                    </div>
+                ))}
+                
+                {/* Bottom Row - Bull buttons */}
+                <div className="grid grid-cols-5 gap-1 flex-1 min-h-0">
+                    {/* Left status column */}
+                    <StatusIndicator hits={0} />
+                    
+                    {/* Bull buttons */}
+                    <button
+                        onClick={() => handleButtonClick(25, 2)}
+                        className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                    >
+                        DBull
+                    </button>
+                    <button
+                        onClick={() => handleButtonClick(25, 1)}
+                        className={`${baseBtn} ${numBtn} text-sm sm:text-base`}
+                    >
+                        Bull
+                    </button>
+                    <div className={`${baseBtn} bg-gray-800 border-b-4 border-gray-900`}></div>
+                    
+                    {/* Right status column */}
+                    <StatusIndicator hits={0} />
+                </div>
+            </div>
+
+            <div className="flex w-full justify-center gap-2 flex-shrink-0 h-14">
+                <button
+                    onClick={handleOk}
+                    className={`${baseBtn} flex-1 bg-green-500 text-white border-b-4 border-green-700 hover:bg-green-600 text-sm sm:text-base`}
+                >
+                    Ok
+                </button>
+                <button
+                    className={`${baseBtn} flex-1 bg-red-900/50 text-red-300 border-b-4 border-red-950 text-sm sm:text-base`}
+                >
+                    Undo
+                </button>
+            </div>
+        </div>
+    );
+};
+
+
+================================================================================
+FILE: src/features/game/components/keypads/KeypadFactory.tsx
+================================================================================
+import type { GameState } from "../../store/useGameStore";
+import { KeypadCricket } from "./KeypadCricket";
+import { KeypadX01 } from "./KeypadX01";
+
+export const createKeypad = (
+  mode: GameState["mode"],
+  inputFormat: "score" | "single",
+  onPress: (points: number) => void
+) => {
+  switch (mode) {
+    case "501":
+      return <KeypadX01 onPress={onPress} inputFormat={inputFormat} />;
+    case "cricket":
+      return <KeypadCricket onPress={onPress} />;
+    default:
+      return null;
+  }
+};
+
+
+
+================================================================================
+FILE: src/features/game/components/keypads/KeypadX01.tsx
+================================================================================
+import React, { useState } from "react";
+import { Keypad } from "./Keypad";
+import { useClearStorage, useResetGame } from "../../store/useGameStore";
+import { ForwardIcon } from "lucide-react";
+
+interface KeypadProps {
+  onPress: (points: number) => void;
+  inputFormat: "score" | "single";
+}
+
+const BASE_BUTTON_CLASS =
+  "min-h-0 rounded-lg font-bold transition-all active:scale-95 active:translate-y-1 touch-manipulation select-none flex items-center justify-center";
+
+const BUTTON_VARIANTS = {
+  gray: "bg-gray-600 text-gray-300 border-b-4 border-gray-800",
+  green: "bg-green-900 text-white border-b-4 border-green-950",
+  red: "bg-red-900 text-white border-b-4 border-red-950",
+  display: "bg-indigo-900 text-gray-300 border-b-4 border-indigo-950",
+} as const;
+
+export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
+  const singleKeypad = [
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+  ];
+  const scoreKeypad = [26, 1, 2, 3, 60, 41, 4, 5, 6, 58, 45, 7, 8, 9, 100];
+  const [pointsToSubmit, setPointsToSubmit] = useState<string | null>(null);
+  const resetGame = useResetGame();
+  const clearStorage = useClearStorage();
+
+  const handleNumClick = (points: number) => {
+    setPointsToSubmit((prev) =>
+      prev ? prev + points.toString() : points.toString()
+    );
+    // onPress(points);
+  };
+
+  const handleReset = () => {
+    resetGame();
+  };
+
+  const handleRestart = () => {
+    clearStorage();
+  };
+
+  // Styles for the buttons - using min-h-0 for flex scaling
+
+  return (
+    <Keypad>
+      <Keypad.Section>
+        <div className="grid grid-cols-5 gap-1 flex-shrink-0 h-18">
+          <button
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-xs sm:text-sm`}
+          >
+            UNDO
+          </button>
+          <div
+            className={`flex items-center justify-center font-bold text-[2em] rounded-lg col-span-4 ${BUTTON_VARIANTS.display} text-sm sm:text-base`}
+          >
+            {pointsToSubmit}
+          </div>
+        </div>
+      </Keypad.Section>
+      <Keypad.Grid
+        numbers={inputFormat === "single" ? singleKeypad : scoreKeypad}
+        onNumberPress={handleNumClick}
+      />
+      <Keypad.Section>
+        <div className="grid grid-cols-3 gap-1 flex-shrink-0 h-18">
+          <button
+            onClick={() => setPointsToSubmit(null)}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-sm sm:text-base`}
+          >
+            CLR
+          </button>
+          <button
+            onClick={() => handleNumClick(0)}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-sm sm:text-base`}
+          >
+            O
+          </button>
+          {pointsToSubmit && pointsToSubmit !== "0" ? (
+            <button
+              onClick={() => {
+                onPress(parseInt(pointsToSubmit ?? "0"));
+                setPointsToSubmit(null);
+              }}
+              className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.green} text-sm sm:text-base`}
+            >
+              OK
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                setPointsToSubmit(null);
+                onPress(0);
+              }}
+              className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.red} text-sm sm:text-base`}
+            >
+              NO SCORE
+            </button>
+          )}
+        </div>
+      </Keypad.Section>
+    </Keypad>
+  );
+};
+
+
+
+================================================================================
+FILE: src/features/game/pages/GamePage.tsx
+================================================================================
+import { ArrowLeft } from "lucide-react";
+import { createKeypad } from "../components/keypads/KeypadFactory";
+import { ScoreBoard } from "../components/ScoreBoard";
+import { useGameConfig, useThrowDart } from "../store/useGameStore";
+import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
+
+export default function GamePage() {
+  const config = useGameConfig();
+  const navigate = useNavigate();
+
+  const handleThrow = useThrowDart();
+
+  if (config.winnerId !== null) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen text-white text-4xl font-bold">
+        🎉
+        <span>Game Over!</span>
+        <Button
+          className="mt-4"
+          variant="primary"
+          onClick={() => navigate("/game")}
+        >
+          Play Again
+        </Button>
+        <Button className="mt-4" onClick={() => navigate("/")}>
+          Go Home
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col h-screen bg-black overflow-hidden">
+      {/* Top: Score Area (Fixed ~200px) */}
+      <div className="h-[50px] min-h-[50px] flex-shrink-0 overflow-hidden grid grid-cols-3 pl-4 pr-4">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-white hover:text-gray-300 transition-colors z-50"
+          aria-label="Go back"
+        >
+          <ArrowLeft size={28} />
+        </button>
+        <div className="flex items-center justify-center font-bold text-2xl">
+          501
+        </div>
+        <div className="flex items-center justify-end font-bold text-2xl">
+          <Button size="sm">End</Button>
+        </div>
+      </div>
+      <div className="h-[35%] min-h-[35%] flex-shrink-0 overflow-hidden">
+        <ScoreBoard />
+      </div>
+
+      {/* Bottom: Keypad (Fills remaining space) */}
+      <div className="flex-1 min-h-0 overflow-hidden w-full">
+        {createKeypad(config.mode, config.inputFormat ?? "score", handleThrow)}
+      </div>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE: src/features/game/pages/GameSetupPage.tsx
+================================================================================
+// src/features/game/pages/GameSetupPage.tsx
+import { useNavigate, useParams } from "react-router";
+import { GameForm } from "../components/GameForm";
+import { Separator } from "@/components/ui/separator";
+import type { GameFormData } from "../types";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { GamePlayers } from "../components/GamePlayers";
+import {
+  useCreateMatch,
+  useStartGame,
+  type Player as GamePlayer,
+} from "../store/useGameStore";
+import {
+  useFetchPlayers,
+  usePlayers,
+} from "@/features/players/pages/store/usePlayersStore";
+import { useEffect, useState } from "react";
+
+export default function GameSetupPage() {
+  const { register, control, getValues } = useForm<GameFormData>({
+    defaultValues: {
+      inputFormat: "score",
+      startScore: "501",
+      bestOfLegs: 3,
+      bestOfSets: 3,
+    },
+  });
+
+  const navigate = useNavigate();
+  const fetchPlayers = useFetchPlayers();
+  useEffect(() => {
+    fetchPlayers();
+  }, [fetchPlayers]);
+  const { mode } = useParams<{ mode: "501" | "cricket" | undefined }>();
+  const startGame = useStartGame();
+  const createMatch = useCreateMatch();
+
+  const players = usePlayers();
+  const [player1Id, setPlayer1Id] = useState<string>("");
+  const [player2Id, setPlayer2Id] = useState<string>("");
+
+  const handleStartGame = () => {
+    const startScoreValue =
+      getValues("startScore") === "301"
+        ? 301
+        : getValues("startScore") === "501"
+        ? 501
+        : getValues("startScore") === "701"
+        ? 701
+        : 501;
+
+    // Get selected players and transform to game players
+    const selectedStorePlayers = players.filter(
+      (p) => p.id === player1Id || p.id === player2Id
+    );
+
+    const gamePlayers: GamePlayer[] = selectedStorePlayers.map((player) => ({
+      id: player.id,
+      name: player.name,
+      score: startScoreValue,
+      scoreAtStartOfTurn: startScoreValue,
+    }));
+
+    startGame({
+      mode: mode as "501" | "cricket",
+      bestOfLegs: getValues("bestOfLegs") ?? 3,
+      bestOfSets: getValues("bestOfSets") ?? 3,
+      startScore: getValues("startScore") ?? "501",
+      inputFormat: getValues().inputFormat,
+      players: gamePlayers.length > 0 ? gamePlayers : undefined,
+    });
+
+    createMatch();
+
+    navigate(`/game/play/${mode}`);
+  };
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8">
+        Setup <span className="text-blue-500">{mode}</span> Game
+      </h1>
+      <GamePlayers
+        players={players}
+        player1Id={player1Id}
+        player2Id={player2Id}
+        onPlayer1Change={setPlayer1Id}
+        onPlayer2Change={setPlayer2Id}
+      />
+      {mode ? (
+        <GameForm mode={mode} control={control} register={register} />
+      ) : (
+        <div>Invalid mode</div>
+      )}
+
+      <Separator className="my-8" />
+      <Button
+        variant="primary"
+        size="lg"
+        className="w-full"
+        onClick={handleStartGame}
+      >
+        Start
+      </Button>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE: src/features/game/pages/SelectGamePage.tsx
+================================================================================
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
+
+export default function SelectGamePage() {
+  const gameModes = [
+    {
+      label: "501",
+      link: "/game/setup/501",
+    },
+    // {
+    //   label: "Cricket",
+    //   link: "/game/setup/cricket",
+    // },
+  ];
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8 text-center">
+        Select Game Mode
+      </h1>
+      <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+        {gameModes.map((gameMode) => (
+          <Link key={gameMode.label} to={gameMode.link} className="w-full">
+            <Button variant="primary" size="lg" className="w-full">
+              {gameMode.label}
+            </Button>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE: src/features/game/store/useGameStore.ts
+================================================================================
+import { create } from "zustand";
+import { useShallow } from "zustand/shallow";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { supabase } from "@/lib/supabase";
+import { useAuthStore } from "@/store/useAuthStore";
+
+export interface Player {
+  id: string;
+  name: string;
+  score: number;
+  scoreAtStartOfTurn: number;
+}
+
+export interface GameHistoryEntry {
+  playerId: string;
+  points: number;
+  timestamp: number;
+}
+
+export interface GameState {
+  matchId: string | null;
+  mode: "501" | "cricket";
+  bestOfLegs: number;
+  bestOfSets: number;
+  startScore: "301" | "501" | "701" | undefined;
+  inputFormat: "score" | "single" | undefined;
+  players: Player[];
+  currentPlayerId: string;
+  winnerId: string | null;
+  history: GameHistoryEntry[];
+
+  startGame: (config: Partial<GameState>) => void;
+  throwDart: (points: number) => void;
+  endTurn: () => void;
+  resetGame: () => void;
+  clearStorage: () => void;
+
+  // Supabase sync actions
+  createMatch: () => Promise<void>;
+  syncDartThrow: (points: number) => Promise<void>;
+  syncToServer: () => Promise<void>;
+}
+
+// ✅ Helper to check if user is authenticated
+const isAuthenticated = (): boolean => {
+  const user = useAuthStore.getState().user;
+  return user !== null;
+};
+
+const useGameStore = create<GameState>()(
+  persist(
+    (set, get) => ({
+      matchId: null,
+      mode: "501",
+      bestOfLegs: 3,
+      bestOfSets: 3,
+      startScore: undefined,
+      inputFormat: "score",
+      players: [] as Player[],
+      currentPlayerId: "1",
+      winnerId: null,
+      history: [],
+
+      startGame: (config: Partial<GameState>) =>
+        set((state) => {
+          const newPlayers = config.players || state.players;
+          return {
+            ...state,
+            mode: config.mode ?? state.mode,
+            bestOfLegs: config.bestOfLegs ?? state.bestOfLegs,
+            bestOfSets: config.bestOfSets ?? state.bestOfSets,
+            startScore: config.startScore ?? state.startScore,
+            inputFormat: config.inputFormat ?? state.inputFormat,
+            players: newPlayers,
+            winnerId: null,
+            currentPlayerId: newPlayers[0]?.id || state.currentPlayerId,
+            history: [],
+          };
+        }),
+
+      endTurn: () =>
+        set((state) => {
+          if (state.winnerId) return state;
+
+          const currentIndex = state.players.findIndex(
+            (p) => p.id === state.currentPlayerId
+          );
+          const nextIndex = (currentIndex + 1) % state.players.length;
+          const nextPlayer = state.players[nextIndex];
+
+          return {
+            ...state,
+            currentPlayerId: nextPlayer.id,
+            players: state.players.map((p) =>
+              p.id === nextPlayer.id ? { ...p, scoreAtStartOfTurn: p.score } : p
+            ),
+          };
+        }),
+
+      resetGame: () => {
+        const state = get();
+        const startScore =
+          state.startScore === "301"
+            ? 301
+            : state.startScore === "501"
+            ? 501
+            : state.startScore === "701"
+            ? 701
+            : 501;
+
+        set({
+          ...state,
+          players: state.players.map((p) => ({
+            ...p,
+            score: startScore,
+            scoreAtStartOfTurn: startScore,
+          })),
+          currentPlayerId: state.players[0]?.id || "1",
+          winnerId: null,
+          history: [],
+        });
+      },
+
+      clearStorage: () => {
+        localStorage.removeItem("current-game");
+        get().resetGame();
+      },
+
+      throwDart: (totalPoints: number) => {
+        const state = get();
+
+        if (state.winnerId) return;
+
+        const player = state.players.find(
+          (p) => p.id === state.currentPlayerId
+        );
+        if (!player) return;
+
+        const newScore = player.score - totalPoints;
+
+        const historyEntry: GameHistoryEntry = {
+          playerId: state.currentPlayerId,
+          points: totalPoints,
+          timestamp: Date.now(),
+        };
+
+        // CHECK 1: WINNING SHOT
+        if (newScore === 0) {
+          set((state) => ({
+            ...state,
+            players: state.players.map((p) =>
+              p.id === state.currentPlayerId ? { ...p, score: 0 } : p
+            ),
+            winnerId: state.currentPlayerId,
+            history: [...state.history, historyEntry],
+          }));
+
+          // ✅ Only sync if authenticated
+          if (state.matchId && isAuthenticated()) {
+            get().syncToServer().catch(console.error);
+          }
+          return;
+        }
+
+        // CHECK 2: BUST
+        if (newScore < 0 || newScore === 1) {
+          set((state) => ({
+            ...state,
+            players: state.players.map((p) =>
+              p.id === state.currentPlayerId
+                ? { ...p, score: p.scoreAtStartOfTurn }
+                : p
+            ),
+            history: [...state.history, historyEntry],
+          }));
+        }
+        // CHECK 3: VALID SHOT
+        else {
+          set((state) => ({
+            ...state,
+            players: state.players.map((p) =>
+              p.id === state.currentPlayerId ? { ...p, score: newScore } : p
+            ),
+            history: [...state.history, historyEntry],
+          }));
+        }
+
+        get().endTurn();
+
+        // ✅ Only sync if authenticated
+        if (state.matchId && isAuthenticated()) {
+          get().syncDartThrow(totalPoints).catch(console.error);
+        }
+      },
+
+      // ✅ Create match - skip if guest
+      createMatch: async () => {
+        // ✅ Early return if not authenticated
+        if (!isAuthenticated()) {
+          console.log("Guest mode: Skipping match creation");
+          return;
+        }
+
+        const state = get();
+
+        if (state.players.length === 0) {
+          console.error("No players selected");
+          return;
+        }
+
+        try {
+          const { data: game, error } = await supabase
+            .from("games")
+            .insert({
+              mode: state.mode,
+              best_of_legs: state.bestOfLegs,
+              best_of_sets: state.bestOfSets,
+              start_score: state.startScore,
+              input_format: state.inputFormat,
+              status: "in_progress",
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+
+          const gamePlayers = state.players.map((player) => ({
+            game_id: game.id,
+            player_id: player.id,
+            player_name: player.name,
+            score: player.score,
+            score_at_start_of_turn: player.scoreAtStartOfTurn,
+            current_player: player.id === state.currentPlayerId,
+          }));
+
+          const { error: playersError } = await supabase
+            .from("game_players")
+            .insert(gamePlayers);
+
+          if (playersError) throw playersError;
+
+          set({ matchId: game.id });
+        } catch (error) {
+          console.error("Failed to create match:", error);
+        }
+      },
+
+      // ✅ Sync dart throw - skip if guest
+      syncDartThrow: async (points: number) => {
+        // ✅ Early return if not authenticated
+        if (!isAuthenticated()) {
+          return;
+        }
+
+        const state = get();
+        if (!state.matchId) return;
+
+        try {
+          await supabase.from("game_history").insert({
+            game_id: state.matchId,
+            player_id: state.currentPlayerId,
+            points,
+            turn_number: Math.floor(state.history.length / 3) + 1,
+            dart_number: 1,
+          });
+        } catch (error) {
+          console.error("Failed to sync dart throw:", error);
+        }
+      },
+
+      // ✅ Sync game state - skip if guest
+      syncToServer: async () => {
+        // ✅ Early return if not authenticated
+        if (!isAuthenticated()) {
+          return;
+        }
+
+        const state = get();
+        if (!state.matchId) return;
+
+        try {
+          const updateData: any = {
+            updated_at: new Date().toISOString(),
+          };
+
+          if (state.winnerId) {
+            updateData.winner_id = state.winnerId;
+            updateData.status = "completed";
+          }
+
+          const { error: gameError } = await supabase
+            .from("games")
+            .update(updateData)
+            .eq("id", state.matchId);
+
+          if (gameError) throw gameError;
+
+          await supabase
+            .from("game_players")
+            .delete()
+            .eq("game_id", state.matchId);
+
+          const gamePlayers = state.players.map((player) => ({
+            game_id: state.matchId!,
+            player_id: player.id,
+            player_name: player.name,
+            score: player.score,
+            score_at_start_of_turn: player.scoreAtStartOfTurn,
+            current_player: player.id === state.currentPlayerId,
+          }));
+
+          const { error: playersError } = await supabase
+            .from("game_players")
+            .insert(gamePlayers);
+
+          if (playersError) throw playersError;
+        } catch (error) {
+          console.error("Failed to sync game state:", error);
+        }
+      },
+    }),
+    {
+      name: "current-game",
+      storage: createJSONStorage(() => localStorage),
+    }
+  )
+);
+
+export default useGameStore;
+
+export const useStartGame = () => useGameStore((state) => state.startGame);
+export const useThrowDart = () => useGameStore((state) => state.throwDart);
+export const useResetGame = () => useGameStore((state) => state.resetGame);
+export const useClearStorage = () =>
+  useGameStore((state) => state.clearStorage);
+export const useCreateMatch = () => useGameStore((state) => state.createMatch);
+export const usePlayers = () =>
+  useGameStore(
+    useShallow((state) => ({
+      players: state.players,
+      currentPlayerId: state.currentPlayerId,
+    }))
+  );
+
+export const useGameConfig = () =>
+  useGameStore(
+    useShallow((state) => ({
+      matchId: state.matchId,
+      mode: state.mode,
+      bestOfLegs: state.bestOfLegs,
+      bestOfSets: state.bestOfSets,
+      startScore: state.startScore,
+      inputFormat: state.inputFormat,
+      winnerId: state.winnerId,
+    }))
+  );
+
+
+
+================================================================================
+FILE: src/features/game/strategies/GameStrategy.ts
+================================================================================
+import { GameStrategyCricket } from "./GameStrategyCricket";
+import { GameStrategy501 } from "./GameStrategyX01";
+
+export interface GameStrategy {
+    handleThrow: (points: number) => void;
+}
+
+export const createGameStrategy = (mode: '501' | 'cricket') => {
+    switch(mode) {
+        case '501':
+            return new GameStrategy501(dispatch);
+        case 'cricket':
+            return new GameStrategyCricket(dispatch);
+        default:
+            throw new Error(`Unsupported mode: ${mode}`);
+    }
+}
+
+
+================================================================================
+FILE: src/features/game/strategies/GameStrategyCricket.ts
+================================================================================
+import type { AppDispatch } from "@/app/store";
+import { throwDart } from "../store/gameSlice";
+import type { GameStrategy } from "./GameStrategy";
+
+export class GameStrategyCricket implements GameStrategy {
+    private dispatch: AppDispatch;
+
+    constructor(
+        dispatch: AppDispatch
+    ){
+        this.dispatch = dispatch;
+    }
+    handleThrow(points:number){
+        this.dispatch(throwDart({points}))
+    }
+}
+
+
+================================================================================
+FILE: src/features/game/strategies/GameStrategyX01.ts
+================================================================================
+
+import type { GameStrategy } from "./GameStrategy";
+
+export class GameStrategy501 implements GameStrategy {
+    handleThrow(points:number){
+        console.log(points);
+    }
+}
+
+
+================================================================================
+FILE: src/features/game/types.ts
+================================================================================
+export type GameFormData = {
+    inputFormat?: 'score' | 'single';
+    startScore?: '301' | '501' | '701';
+    bestOfLegs?: number;
+    bestOfSets?: number;
+}
+
+
+================================================================================
+FILE: src/features/players/pages/AddPlayerPage.tsx
+================================================================================
+import { Field, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { useAddPlayer } from "./store/usePlayersStore";
+import { useNavigate } from "react-router";
+import { Button } from "@/components/ui/button";
+
+export const AddPlayerPage = () => {
+  const addPlayer = useAddPlayer();
+  const navigate = useNavigate();
+  const { register, handleSubmit } = useForm<{ name: string }>({
+    defaultValues: {
+      name: "",
+    },
+  });
+
+  const onSubmit = (data: { name: string }) => {
+    addPlayer(data.name);
+    navigate("/players");
+  };
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8">
+        Add player
+      </h1>
+      <form className="w-full" onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <Field>
+            <Label>Name</Label>
+            <Input {...register("name")} type="text" />
+          </Field>
+        </FieldGroup>
+        <Button variant="primary" type="submit" className="w-full mt-8">
+          Add
+        </Button>
+      </form>
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: src/features/players/pages/PlayersPage.tsx
+================================================================================
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router";
+import {
+  useFetchPlayers,
+  usePlayers,
+  type Player,
+  useDeletePlayer,
+} from "./store/usePlayersStore";
+import { useEffect } from "react";
+import { PencilIcon, TrashIcon } from "lucide-react";
+
+export const PlayersPage = () => {
+  const players = usePlayers();
+  const fetchPlayers = useFetchPlayers();
+  const deletePlayer = useDeletePlayer();
+  useEffect(() => {
+    fetchPlayers();
+  }, [fetchPlayers]);
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-8">
+        Players List
+      </h1>
+      <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 mb-4">
+        {players.map((player: Player) => {
+          return (
+            <div
+              key={player.id}
+              className="w-full p-4 border border-gray-700 flex justify-between items-center"
+            >
+              <span className="text-lg font-bold uppercase">{player.name}</span>
+              <div className="flex gap-2">
+                <Button variant="primary" size="sm">
+                  <PencilIcon className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => deletePlayer(player.id)}
+                >
+                  <TrashIcon className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      <Button variant="primary" size="sm" className="w-full">
+        <Link to="/players/add">Add</Link>
+      </Button>
+    </div>
+  );
+};
+
+
+
+================================================================================
+FILE: src/features/players/pages/store/usePlayersStore.ts
+================================================================================
+import { supabase } from "@/lib/supabase";
+import { create } from "zustand";
+
+export interface Player {
+  id: string;
+  name: string;
+}
+
+interface PlayersState {
+  players: Player[];
+  fetchPlayers: () => Promise<Player[]>;
+  addPlayer: (name: string) => Promise<Player>;
+  deletePlayer: (id: string) => Promise<void>;
+  // updatePlayer: (player: Player) => void;
+  // deletePlayer: (id: string) => void;
+}
+
+const usePlayersStore = create<PlayersState>()((set, get) => ({
+  players: [],
+  fetchPlayers: async () => {
+    const { data, error } = await supabase.from("players").select("*");
+    if (error) throw error;
+    set({ players: data });
+    return data;
+  },
+  addPlayer: async (name: string) => {
+    const { data, error } = await supabase
+      .from("players")
+      .insert({ name })
+      .select()
+      .single();
+    if (error) throw error;
+    set((state) => ({ players: [...state.players, data] }));
+    return data;
+  },
+  deletePlayer: async (id: string) => {
+    const { error } = await supabase.from("players").delete().eq("id", id);
+    if (error) throw error;
+    set((state) => ({ players: state.players.filter((p) => p.id !== id) }));
+  },
+  // addPlayer: (player) => {
+  //     set((state) => ({ players: [...state.players, player] }));
+  // },
+  // updatePlayer: (player) => {
+  //     set((state) => ({ players: state.players.map((p) => p.id === player.id ? player : p) }));
+  // },
+}));
+
+export const usePlayers = () => usePlayersStore((state) => state.players);
+export const useFetchPlayers = () =>
+  usePlayersStore((state) => state.fetchPlayers);
+export const useAddPlayer = () => usePlayersStore((state) => state.addPlayer);
+export const useDeletePlayer = () =>
+  usePlayersStore((state) => state.deletePlayer);
+
+
+
+================================================================================
+FILE: src/index.css
+================================================================================
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+
+================================================================================
+FILE: src/lib/supabase.ts
+================================================================================
+import { createClient } from "@supabase/supabase-js";
+
+export interface User {
+  id: string;
+  email: string;
+}
+
+export const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_PUBLIC_KEY,
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
+);
+
+
+
+================================================================================
+FILE: src/lib/utils.ts
+================================================================================
+import { clsx, type ClassValue } from "clsx"
+import { twMerge } from "tailwind-merge"
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs))
+}
+
+
+
+================================================================================
+FILE: src/main.tsx
+================================================================================
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import { RouterProvider } from "react-router";
+import router from "./router";
+import { useAuthStore } from "./store/useAuthStore";
+
+useAuthStore.getState().initialize();
+
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <RouterProvider router={router} />
+  </StrictMode>
+);
+
+
+
+================================================================================
+FILE: src/pages/Login.tsx
+================================================================================
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useSignIn } from "@/store/useAuthStore";
+import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router";
+
+interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export default function LoginPage() {
+  const { register, handleSubmit } = useForm<LoginFormData>();
+  const signIn = useSignIn();
+  const navigate = useNavigate();
+
+  const onSubmit = async (data: LoginFormData) => {
+    const { error, success } = await signIn(data.email, data.password);
+    if (error) {
+      console.error(error);
+    }
+    if (success) {
+      navigate("/");
+    }
+  };
+
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-5">
+      <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-4">
+        Sign In
+      </h1>
+      <form className="w-full max-w-lg" onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <Field>
+            <Label>Email</Label>
+            <Input type="email" {...register("email")} />
+          </Field>
+          <Field>
+            <Label>Password</Label>
+            <Input type="password" {...register("password")} />
+          </Field>
+        </FieldGroup>
+        <Button variant="primary" type="submit" className="w-full mt-12">
+          Sign In
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE: src/pages/ProfilePage.tsx
+================================================================================
+import { Button } from "@/components/ui/button";
+import { Field, FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { useUpdateUser, useUser } from "@/store/useAuthStore";
+import { useForm } from "react-hook-form";
+
+export default function ProfilePage() {
+  const user = useUser();
+  const updateUser = useUpdateUser();
+  const { register, handleSubmit, reset } = useForm<{ displayName: string }>({
+    values: {
+      displayName: user?.user_metadata?.display_name ?? "",
+    },
+  });
+
+  const onSubmit = async (data: { displayName: string }) => {
+    const { error } = await updateUser({
+      displayName: data.displayName,
+    });
+    if (error) {
+      console.error(error);
+    }
+  };
+  return (
+    <div className="h-screen flex flex-col items-center justify-center p-4">
+      <h1 className="text-4xl text-center font-black text-gray-400 uppercase tracking-widest mb-4">
+        Welcome{" "}
+        {user?.user_metadata?.display_name
+          ? user.user_metadata.display_name
+          : user?.email}
+      </h1>
+      <Separator className="my-4" />
+      <form className="w-full max-w-lg" onSubmit={handleSubmit(onSubmit)}>
+        <FieldGroup>
+          <Field>
+            <Label>Display Name</Label>
+            <Input {...register("displayName")} type="text" />
+          </Field>
+        </FieldGroup>
+        <Button variant="primary" type="submit" className="w-full mt-8">
+          Update
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+
+
+================================================================================
+FILE: src/pages/ScoreboardPage.tsx
+================================================================================
+export default function ScoreboardPage() {
+    return (
+        <div className="h-screen flex flex-col items-center justify-center">
+            <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-4">
+                Scoreboard
+            </h1>
+            <p className="text-gray-500">Coming soon...</p>
+        </div>
+    )
+}
+
+
+
+================================================================================
+FILE: src/pages/StatisticsPage.tsx
+================================================================================
+export default function StatisticsPage() {
+    return (
+        <div className="h-screen flex flex-col items-center justify-center">
+            <h1 className="text-4xl font-black text-gray-400 uppercase tracking-widest mb-4">
+                Statistics
+            </h1>
+            <p className="text-gray-500">Coming soon...</p>
+        </div>
+    )
+}
+
+
+
+================================================================================
+FILE: src/router/guards.ts
+================================================================================
+import { useAuthStore } from "@/store/useAuthStore";
+import { redirect } from "react-router";
+
+export function requireAuth() {
+  const { user, loading } = useAuthStore.getState();
+
+  if (loading) {
+    return null;
+  }
+
+  if (!user) {
+    throw redirect("/login");
+  }
+
+  return { user };
+}
+
+
+
+================================================================================
+FILE: src/router/index.ts
+================================================================================
+import App from "@/App";
+import GamePage from "@/features/game/pages/GamePage";
+import ScoreboardPage from "@/pages/ScoreboardPage";
+import StatisticsPage from "@/pages/StatisticsPage";
+import ProfilePage from "@/pages/ProfilePage";
+import { createBrowserRouter } from "react-router";
+import { RootLayout } from "@/components/layouts/RootLayout";
+import SelectGamePage from "@/features/game/pages/SelectGamePage";
+import GameSetupPage from "@/features/game/pages/GameSetupPage";
+import LoginPage from "@/pages/Login";
+import { requireAuth } from "./guards";
+import { PlayersPage } from "@/features/players/pages/PlayersPage";
+import { AddPlayerPage } from "@/features/players/pages/AddPlayerPage";
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    Component: RootLayout,
+    children: [
+      {
+        index: true,
+        Component: App,
+      },
+      {
+        path: "/login",
+        Component: LoginPage,
+      },
+      {
+        path: "/game",
+        Component: SelectGamePage,
+      },
+      {
+        path: "/game/setup/:mode",
+        Component: GameSetupPage,
+      },
+      {
+        path: "/game/play/:mode",
+        Component: GamePage,
+      },
+      {
+        path: "/players",
+        Component: PlayersPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/players/add",
+        Component: AddPlayerPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/scoreboard",
+        Component: ScoreboardPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/statistics",
+        Component: StatisticsPage,
+        loader: requireAuth,
+      },
+      {
+        path: "/profile",
+        Component: ProfilePage,
+        loader: requireAuth,
+      },
+    ],
+  },
+]);
+
+export default router;
+
+
+
+================================================================================
+FILE: src/store/useAuthStore.ts
+================================================================================
+import type { AuthError, Session, User } from "@supabase/supabase-js";
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { supabase } from "../lib/supabase";
+
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  signUp: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null; success: boolean }>;
+  signIn: (
+    email: string,
+    password: string
+  ) => Promise<{ error: AuthError | null; success: boolean }>;
+  signOut: () => Promise<void>;
+  initialize: () => Promise<void>;
+  updateUser: ({
+    displayName,
+  }: {
+    displayName: string;
+  }) => Promise<{ error: AuthError | null; success: boolean }>;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      session: null,
+      loading: true,
+
+      initialize: async () => {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          set({ session, user: session?.user ?? null, loading: false });
+
+          supabase.auth.onAuthStateChange((event, session) => {
+            set({ session, user: session?.user ?? null });
+          });
+        } catch (err) {
+          console.error("Error initializing auth store:", err);
+          set({ loading: false });
+        }
+      },
+
+      signUp: async (email: string, password: string) => {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (error) {
+          return { error, success: false };
+        }
+
+        if (data.user && data.session) {
+          set({
+            user: data.user,
+            session: data.session,
+            loading: false,
+          });
+
+          return { success: true };
+        }
+      },
+
+      updateUser: async ({ displayName }: { displayName: string }) => {
+        const { data, error } = await supabase.auth.updateUser({
+          data: {
+            display_name: displayName,
+          },
+        });
+
+        if (error) {
+          return { error, success: false };
+        }
+
+        if (data.user) {
+          set({
+            user: data.user,
+          });
+
+          return { error: null, success: true };
+        }
+
+        return { error: null, success: false };
+      },
+
+      signIn: async (email: string, password: string) => {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (error) {
+          return { error, success: false };
+        }
+
+        if (data.user && data.session) {
+          set({
+            user: data.user,
+            session: data.session,
+            loading: false,
+          });
+
+          return { error: null, success: true };
+        }
+
+        return { error: null, success: false };
+      },
+
+      signOut: async () => {
+        await supabase.auth.signOut();
+        set({ user: null, session: null });
+      },
+    }),
+    {
+      name: "auth-storage",
+      partialize: (state) => ({
+        // Only persist user ID, not full user object (security)
+        user: state.user
+          ? { id: state.user.id, email: state.user.email }
+          : null,
+      }),
+    }
+  )
+);
+
+export const useUser = () => useAuthStore((state) => state.user);
+export const useSession = () => useAuthStore((state) => state.session);
+export const useAuthLoading = () => useAuthStore((state) => state.loading);
+export const useSignIn = () => useAuthStore((state) => state.signIn);
+export const useSignUp = () => useAuthStore((state) => state.signUp);
+export const useSignOut = () => useAuthStore((state) => state.signOut);
+export const useUpdateUser = () => useAuthStore((state) => state.updateUser);
+
+
+
+================================================================================
+FILE: tsconfig.app.json
+================================================================================
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "types": [
+      "vite/client"
+    ],
+    "skipLibCheck": true,
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}
+
+
+================================================================================
+FILE: tsconfig.json
+================================================================================
+{
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.node.json"
+    }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./src/*"
+      ]
+    }
+  }
+}
+
+
+================================================================================
+FILE: tsconfig.node.json
+================================================================================
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "ESNext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
+  },
+  "include": ["vite.config.ts"]
+}
+
+
+
+================================================================================
+FILE: vite.config.ts
+================================================================================
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react-swc'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'path'
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+})
+
+

@@ -71,3 +71,28 @@ export default defineConfig([
   },
 ])
 ```
+
+## Pikado client notes
+
+This is the React + TypeScript + Vite client for the Pikado darts app.
+
+### Local development
+
+- Install dependencies and start the dev server from the `client` directory:
+
+```bash
+npm install
+npm run dev
+```
+
+### Local-only auth and storage
+
+- The app no longer uses Supabase or any backend.
+- Auth, players, current game, and basic match history are all stored in `localStorage`:
+  - `pikado-users` / `pikado-active-user` – simple email/password auth.
+  - `pikado-players` – locally managed player list.
+  - `current-game` – persisted in-progress game state.
+  - `pikado-history` – completed game summaries for the Scoreboard and Statistics pages.
+
+Clearing browser storage will reset all of this data.
+

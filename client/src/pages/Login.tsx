@@ -12,7 +12,7 @@ interface LoginFormData {
 }
 
 export default function LoginPage() {
-  const { register, handleSubmit } = useForm<LoginFormData>();
+  const { register, handleSubmit, setValue } = useForm<LoginFormData>();
   const signIn = useSignIn();
   const navigate = useNavigate();
 
@@ -24,6 +24,11 @@ export default function LoginPage() {
     if (success) {
       navigate("/");
     }
+  };
+
+  const fillDemoCredentials = () => {
+    setValue("email", "demo@example.com");
+    setValue("password", "demo1234");
   };
 
   return (
@@ -45,6 +50,15 @@ export default function LoginPage() {
         <Button variant="primary" type="submit" className="w-full mt-12">
           Sign In
         </Button>
+        {import.meta.env.DEV && (
+          <Button
+            type="button"
+            className="w-full mt-4"
+            onClick={fillDemoCredentials}
+          >
+            Use demo credentials
+          </Button>
+        )}
       </form>
     </div>
   );

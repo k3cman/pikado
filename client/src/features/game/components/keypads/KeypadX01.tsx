@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { Keypad } from "./Keypad";
-import { useClearStorage, useResetGame } from "../../store/useGameStore";
-import { ForwardIcon } from "lucide-react";
+import {
+  useClearStorage,
+  useResetGame,
+  useUndo,
+} from "../../store/useGameStore";
+import useGameStore from "../../store/useGameStore";
+import { useNavigate } from "react-router";
 
 interface KeypadProps {
   onPress: (points: number) => void;
@@ -26,6 +31,10 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
   const [pointsToSubmit, setPointsToSubmit] = useState<string | null>(null);
   const resetGame = useResetGame();
   const clearStorage = useClearStorage();
+  const undo = useUndo();
+  const canUndo =
+    useGameStore((s) => s.history.length > 0 && s.winnerId === null);
+  const navigate = useNavigate();
 
   const handleNumClick = (points: number) => {
     setPointsToSubmit((prev) =>
@@ -40,6 +49,7 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
 
   const handleRestart = () => {
     clearStorage();
+    navigate("/game");
   };
 
   // Styles for the buttons - using min-h-0 for flex scaling
@@ -49,7 +59,10 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
       <Keypad.Section>
         <div className="grid grid-cols-5 gap-1 flex-shrink-0 h-18">
           <button
-            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-xs sm:text-sm`}
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-xs sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             UNDO
           </button>
@@ -99,6 +112,22 @@ export const KeypadX01: React.FC<KeypadProps> = ({ onPress, inputFormat }) => {
               NO SCORE
             </button>
           )}
+        </div>
+      </Keypad.Section>
+      <Keypad.Section>
+        <div className="grid grid-cols-2 gap-1 flex-shrink-0 h-18 mt-1">
+          <button
+            onClick={handleReset}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.gray} text-xs sm:text-sm`}
+          >
+            Reset Leg
+          </button>
+          <button
+            onClick={handleRestart}
+            className={`${BASE_BUTTON_CLASS} ${BUTTON_VARIANTS.red} text-xs sm:text-sm`}
+          >
+            Restart Game
+          </button>
         </div>
       </Keypad.Section>
     </Keypad>

@@ -1,7 +1,11 @@
 import { ArrowLeft } from "lucide-react";
 import { createKeypad } from "../components/keypads/KeypadFactory";
 import { ScoreBoard } from "../components/ScoreBoard";
-import { useGameConfig, useThrowDart } from "../store/useGameStore";
+import {
+  useClearStorage,
+  useGameConfig,
+  useThrowDart,
+} from "../store/useGameStore";
 import { useNavigate } from "react-router";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +14,7 @@ export default function GamePage() {
   const navigate = useNavigate();
 
   const handleThrow = useThrowDart();
+  const clearStorage = useClearStorage();
 
   if (config.winnerId !== null) {
     return (
@@ -45,7 +50,15 @@ export default function GamePage() {
           501
         </div>
         <div className="flex items-center justify-end font-bold text-2xl">
-          <Button size="sm">End</Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              clearStorage();
+              navigate("/game");
+            }}
+          >
+            End
+          </Button>
         </div>
       </div>
       <div className="h-[35%] min-h-[35%] flex-shrink-0 overflow-hidden">

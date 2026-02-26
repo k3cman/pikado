@@ -7,6 +7,14 @@
 - [x] Add Input like field
 - [x] Finish x01 game mode
 
+### X01 MVP rules (scope)
+
+- Uses a simplified x01 model for now:
+  - No double-out requirement is enforced.
+  - Each keypad submission (OK/NO SCORE) is treated as a single visit, not per-dart tracking.
+  - Busts occur when the score would go below 0 or to 1.
+- Legs/sets fields are available in the UI but the game currently plays as a single leg; multi-leg/set progression will be added later.
+
 ## GamePage
 
 - [ ] Add Error Boundary

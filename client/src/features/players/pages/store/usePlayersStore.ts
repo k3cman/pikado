@@ -1,4 +1,3 @@
-import { supabase } from "@/lib/supabase";
 import { create } from "zustand";
 
 export interface Player {
@@ -15,27 +14,33 @@ interface PlayersState {
   // deletePlayer: (id: string) => void;
 }
 
+const PLAYERS_KEY = "pikado-players";
+
 const usePlayersStore = create<PlayersState>()((set, get) => ({
   players: [],
   fetchPlayers: async () => {
-    const { data, error } = await supabase.from("players").select("*");
-    if (error) throw error;
+    const raw = localStorage.getItem(PLAYERS_KEY);
+    const data: Player[] = raw ? JSON.parse(raw) : [];
     set({ players: data });
     return data;
   },
   addPlayer: async (name: string) => {
-    const { data, error } = await supabase
-      .from("players")
-      .insert({ name })
-      .select()
-      .single();
-    if (error) throw error;
-    set((state) => ({ players: [...state.players, data] }));
-    return data;
+    const raw = localStorage.getItem(PLAYERS_KEY);
+    const players: Player[] = raw ? JSON.parse(raw) : [];
+    const newPlayer: Player = {
+      id: crypto.randomUUID(),
+      name,
+    };
+    const updated = [...players, newPlayer];
+    localStorage.setItem(PLAYERS_KEY, JSON.stringify(updated));
+    set((state) => ({ players: [...state.players, newPlayer] }));
+    return newPlayer;
   },
   deletePlayer: async (id: string) => {
-    const { error } = await supabase.from("players").delete().eq("id", id);
-    if (error) throw error;
+    const raw = localStorage.getItem(PLAYERS_KEY);
+    const players: Player[] = raw ? JSON.parse(raw) : [];
+    const updated = players.filter((p) => p.id !== id);
+    localStorage.setItem(PLAYERS_KEY, JSON.stringify(updated));
     set((state) => ({ players: state.players.filter((p) => p.id !== id) }));
   },
   // addPlayer: (player) => {
