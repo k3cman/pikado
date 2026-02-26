@@ -23,7 +23,7 @@ function App() {
       {user ? (
         <div>
           <p className="uppercase">
-            Welcome {user.user_metadata?.display_name ?? user.email}
+            Welcome {user.displayName ?? user.email}
           </p>
         </div>
       ) : (

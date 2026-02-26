@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 export interface LocalUser {
   id: string;
   email: string;
+  displayName?: string;
 }
 
 interface StoredUser extends LocalUser {
@@ -36,7 +37,7 @@ const ACTIVE_USER_KEY = "pikado-active-user";
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       session: null,
       loading: true,
@@ -89,7 +90,15 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUser: async ({ displayName }: { displayName: string }) => {
-        console.log("updateUser called with displayName:", displayName);
+        const state = useAuthStore.getState();
+        if (!state.user) return { error: "Not signed in", success: false };
+        const updated = { ...state.user, displayName };
+        set({ user: updated });
+        try {
+          localStorage.setItem(ACTIVE_USER_KEY, JSON.stringify(updated));
+        } catch (e) {
+          return { error: "Failed to save", success: false };
+        }
         return { error: null, success: true };
       },
 
@@ -149,7 +158,11 @@ export const useAuthStore = create<AuthState>()(
       name: "auth-storage",
       partialize: (state) => ({
         user: state.user
-          ? { id: state.user.id, email: state.user.email }
+          ? {
+              id: state.user.id,
+              email: state.user.email,
+              displayName: state.user.displayName,
+            }
           : null,
       }),
     }

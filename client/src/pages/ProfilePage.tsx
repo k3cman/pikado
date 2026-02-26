@@ -9,9 +9,9 @@ import { useForm } from "react-hook-form";
 export default function ProfilePage() {
   const user = useUser();
   const updateUser = useUpdateUser();
-  const { register, handleSubmit, reset } = useForm<{ displayName: string }>({
+  const { register, handleSubmit } = useForm<{ displayName: string }>({
     values: {
-      displayName: user?.user_metadata?.display_name ?? "",
+      displayName: user?.displayName ?? "",
     },
   });
 
@@ -27,9 +27,7 @@ export default function ProfilePage() {
     <div className="h-screen flex flex-col items-center justify-center p-4">
       <h1 className="text-4xl text-center font-black text-gray-400 uppercase tracking-widest mb-4">
         Welcome{" "}
-        {user?.user_metadata?.display_name
-          ? user.user_metadata.display_name
-          : user?.email}
+        {user?.displayName ?? user?.email}
       </h1>
       <Separator className="my-4" />
       <form className="w-full max-w-lg" onSubmit={handleSubmit(onSubmit)}>

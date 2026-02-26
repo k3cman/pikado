@@ -16,7 +16,7 @@ interface PlayersState {
 
 const PLAYERS_KEY = "pikado-players";
 
-const usePlayersStore = create<PlayersState>()((set, get) => ({
+const usePlayersStore = create<PlayersState>()((set) => ({
   players: [],
   fetchPlayers: async () => {
     const raw = localStorage.getItem(PLAYERS_KEY);
